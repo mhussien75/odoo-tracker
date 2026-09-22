@@ -229,11 +229,6 @@
                 </a>
 
                 <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
-                    <div class="d-none d-md-flex align-items-center gap-2 bg-body-tertiary px-3 py-1.5 rounded-pill border border-secondary-subtle me-2">
-                        <i class="fa-solid fa-flag-checkered text-warning"></i>
-                        <span class="small fw-semibold">Hard Cutoff: <span class="text-primary fw-bold">31 Dec 2026</span></span>
-                    </div>
-
                     <button class="btn btn-primary rounded-3 d-flex align-items-center gap-2 fw-semibold" onclick="openTaskModal()">
                         <i class="fa-solid fa-plus"></i>
                         <span class="d-none d-sm-inline">New Task</span>
@@ -244,12 +239,10 @@
                             <i class="fa-solid fa-gear"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                            <li><a class="dropdown-item" href="#" onclick="openEditCtaModal()"><i class="fa-solid fa-bullhorn me-2 text-warning"></i>Edit Program CTA Directive</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="openAddCtaModal()"><i class="fa-solid fa-plus me-2 text-warning"></i>Add Program CTA Directive</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="#" onclick="exportData()"><i class="fa-solid fa-download me-2 text-primary"></i>Export Backup JSON</a></li>
                             <li><a class="dropdown-item" href="#" onclick="triggerImport()"><i class="fa-solid fa-upload me-2 text-info"></i>Import Backup JSON</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="#" onclick="confirmResetAll()"><i class="fa-solid fa-trash-can me-2"></i>Reset All Data</a></li>
                         </ul>
                     </div>
 
@@ -317,36 +310,33 @@
                     </div>
 
                     <div class="row g-3 mb-4">
-                        <div class="col-12 col-md-4">
-                            <div class="glass-card kpi-card kpi-deadline p-3 p-md-4">
-                                <span class="text-secondary small fw-bold text-uppercase d-block mb-1">Days To Deadline</span>
-                                <div class="d-flex align-items-baseline justify-content-between">
-                                    <h3 class="display-6 fw-extrabold mb-0 text-body" id="kpiDaysRemaining">--</h3>
-                                    <i class="fa-solid fa-hourglass-half text-warning fs-4 opacity-75"></i>
+                        <div class="col-12 col-md-6">
+                            <div class="glass-card kpi-card kpi-deadline p-3 p-md-4 h-100">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="text-secondary small fw-bold text-uppercase">CEO Current Comment</span>
+                                    <i class="fa-solid fa-comment-dots text-warning fs-4 opacity-75"></i>
                                 </div>
-                                <span class="text-secondary micro-text">Hard Cutoff: 31 Dec 2026</span>
+                                <div class="p-3 rounded-3 bg-body-tertiary border mb-2" style="min-height: 70px;">
+                                    <p class="fs-6 fw-semibold text-body mb-0" id="ceoCommentDisplay" style="white-space: pre-line;">No comment recorded yet.</p>
+                                </div>
+                                <div class="text-end">
+                                    <button class="btn btn-sm btn-outline-warning text-dark fw-bold rounded-3" onclick="openCeoCommentModal()">
+                                        <i class="fa-solid fa-pen-to-square me-1"></i> Update Comment
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="col-12 col-md-4">
-                            <div class="glass-card kpi-card kpi-progress p-3 p-md-4">
-                                <span class="text-secondary small fw-bold text-uppercase d-block mb-1">Overall Progress</span>
-                                <div class="d-flex align-items-baseline justify-content-between">
-                                    <h3 class="display-6 fw-extrabold mb-0 text-body" id="kpiOverallProgress">0%</h3>
-                                    <i class="fa-solid fa-chart-line text-success fs-4 opacity-75"></i>
+                        <div class="col-12 col-md-6">
+                            <div class="glass-card kpi-card kpi-progress p-3 p-md-4 h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <span class="text-secondary small fw-bold text-uppercase d-block mb-1">Overall Progress</span>
+                                    <div class="d-flex align-items-baseline justify-content-between">
+                                        <h3 class="display-6 fw-extrabold mb-0 text-body" id="kpiOverallProgress">0%</h3>
+                                        <i class="fa-solid fa-chart-line text-success fs-4 opacity-75"></i>
+                                    </div>
                                 </div>
-                                <span class="text-secondary micro-text">Sum of Project Pct (Out of 600%)</span>
-                            </div>
-                        </div>
-
-                        <div class="col-12 col-md-4">
-                            <div class="glass-card kpi-card kpi-active p-3 p-md-4">
-                                <span class="text-secondary small fw-bold text-uppercase d-block mb-1">Total Active Tasks</span>
-                                <div class="d-flex align-items-baseline justify-content-between">
-                                    <h3 class="display-6 fw-extrabold mb-0 text-body" id="kpiActiveTasks">0</h3>
-                                    <i class="fa-solid fa-list-check text-primary fs-4 opacity-75"></i>
-                                </div>
-                                <span class="text-secondary micro-text">In Progress, On Hold & Planned</span>
+                                <span class="text-secondary micro-text mt-2">Sum of Project Pct (Out of 600%)</span>
                             </div>
                         </div>
                     </div>
@@ -426,7 +416,7 @@
                             <div class="col-12 col-md-7">
                                 <div class="input-group">
                                     <span class="input-group-text bg-body-tertiary border-secondary-subtle"><i class="fa-solid fa-magnifying-glass text-secondary"></i></span>
-                                    <input type="text" id="taskSearchInput" class="form-control border-secondary-subtle" placeholder="Search tasks, task IDs, or next actions..." oninput="handleTableFilter()">
+                                    <input type="text" id="taskSearchInput" class="form-control border-secondary-subtle" placeholder="Search tasks, task IDs, or notes..." oninput="handleTableFilter()">
                                 </div>
                             </div>
                             <div class="col-10 col-md-4">
@@ -447,10 +437,10 @@
                             <table class="table table-custom align-middle mb-0">
                                 <thead>
                                     <tr>
-                                        <th style="width: 60px;" class="text-center">Pin</th>
+                                        <th style="width: 70px;" class="text-center">Pin (1 or 2)</th>
                                         <th style="width: 100px;">Task ID</th>
                                         <th>Task Description</th>
-                                        <th style="width: 200px;">Next Action</th>
+                                        <th style="width: 220px;">Notes</th>
                                         <th style="width: 130px;">Status</th>
                                         <th style="width: 160px;">Progress</th>
                                         <th style="width: 100px;" class="text-end">Actions</th>
@@ -500,8 +490,8 @@
                                 </select>
                             </div>
                             <div class="col-12 col-md-6">
-                                <label for="taskNextActionInput" class="form-label small fw-bold">Next Immediate Action</label>
-                                <input type="text" class="form-control border-secondary-subtle" id="taskNextActionInput" placeholder="e.g. Schedule review meeting">
+                                <label for="taskNextActionInput" class="form-label small fw-bold">Notes</label>
+                                <input type="text" class="form-control border-secondary-subtle" id="taskNextActionInput" placeholder="e.g. Additional details or notes">
                             </div>
                             <div class="col-12">
                                 <label for="taskDescInput" class="form-label small fw-bold">Task Description & Notes <span class="text-danger">*</span></label>
@@ -524,7 +514,7 @@
                                 <div class="form-check form-switch mt-2">
                                     <input class="form-check-input" type="checkbox" id="taskPinnedCheck">
                                     <label class="form-check-label fw-semibold small" for="taskPinnedCheck">
-                                        <i class="fa-solid fa-thumbtack text-primary me-1"></i> Feature as Current Task in Focus on Hero Banner
+                                        <i class="fa-solid fa-thumbtack text-primary me-1"></i> Feature as Current Task in Focus (Pins up to 2 tasks)
                                     </label>
                                 </div>
                             </div>
@@ -539,18 +529,19 @@
         </div>
     </div>
 
-    <div class="modal fade" id="editCtaModal" tabindex="-1" aria-hidden="true">
+    <!-- MODAL: ADD / EDIT CTA DIRECTIVES -->
+    <div class="modal fade" id="ctaModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content glass-card border-warning-subtle">
                 <div class="modal-header border-bottom border-secondary-subtle">
-                    <h5 class="modal-title fw-bold text-body"><i class="fa-solid fa-bullhorn text-warning me-2"></i>Edit Program Call To Action Directive</h5>
+                    <h5 class="modal-title fw-bold text-body"><i class="fa-solid fa-bullhorn text-warning me-2"></i><span id="ctaModalTitle">Add Program Call To Action</span></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-secondary small mb-3">Update the overarching program directive displayed prominently on the dashboard.</p>
+                    <input type="hidden" id="ctaIndexInput">
                     <div class="mb-3">
                         <label for="ctaTextInput" class="form-label fw-bold small">Call to Action Directive Text</label>
-                        <textarea class="form-control border-secondary-subtle p-3" id="ctaTextInput" rows="4" required></textarea>
+                        <textarea class="form-control border-secondary-subtle p-3" id="ctaTextInput" rows="4" placeholder="Enter CTA directive..." required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-top border-secondary-subtle">
@@ -561,11 +552,33 @@
         </div>
     </div>
 
+    <!-- MODAL: CEO COMMENT -->
+    <div class="modal fade" id="ceoCommentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card border-warning-subtle">
+                <div class="modal-header border-bottom border-secondary-subtle">
+                    <h5 class="modal-title fw-bold text-body"><i class="fa-solid fa-comment-dots text-warning me-2"></i>Update CEO Current Comment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="ceoCommentInput" class="form-label fw-bold small">CEO Comment</label>
+                        <textarea class="form-control border-secondary-subtle p-3" id="ceoCommentInput" rows="4" placeholder="Enter CEO comment..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary-subtle">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning px-4 fw-semibold text-dark" onclick="saveCeoComment()">Save Comment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="selectPinModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content glass-card border-secondary-subtle">
                 <div class="modal-header border-bottom border-secondary-subtle">
-                    <h5 class="modal-title fw-bold text-body"><i class="fa-solid fa-thumbtack text-primary me-2"></i>Select Task to Pin in Focus</h5>
+                    <h5 class="modal-title fw-bold text-body"><i class="fa-solid fa-thumbtack text-primary me-2"></i>Select Task to Pin in Focus (Max 2)</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-0">
@@ -591,22 +604,6 @@
         </div>
     </div>
 
-    <div class="modal fade" id="resetModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content glass-card border-danger-subtle">
-                <div class="modal-body text-center p-4">
-                    <div class="text-danger mb-3"><i class="fa-solid fa-trash-can fs-1"></i></div>
-                    <h5 class="fw-bold mb-2 text-body">Reset All Program Data?</h5>
-                    <p class="text-secondary small mb-4">This will clear all tasks and reset notices for everyone.</p>
-                    <div class="d-flex gap-2 justify-content-center">
-                        <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger btn-sm px-3" onclick="executeResetAll()">Reset Data</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="liveToast" class="toast align-items-center border-0 glass-card shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
@@ -626,8 +623,9 @@
         const BIN_ID = '6ab23850ac6210605ae897ff'; 
         const API_KEY = '$2a$10$AEh.xH3TcEreYwAoCzjK.ehm62aoYfWf0GbbcIhNtf9vjdUhk95j2';
 
-        const HARD_DEADLINE = new Date('2026-12-31T23:59:59');
-        const DEFAULT_CTA_TEXT = "Ensure all cross-functional leads finalize security compliance sign-offs and execute end-to-end integration testing before the Q4 cutoff date.";
+        const DEFAULT_CTA_LIST = [
+            "Ensure all cross-functional leads finalize security compliance sign-offs and execute end-to-end integration testing before the Q4 cutoff date."
+        ];
 
         const PROJECTS = [
             { key: 'BLOOM', title: 'BLOOM', icon: 'fa-seedling', color: '#10b981' },
@@ -639,20 +637,21 @@
         ];
 
         let tasks = [];
-        let standaloneCtaText = DEFAULT_CTA_TEXT;
+        let ctaList = [...DEFAULT_CTA_LIST];
+        let ceoComment = "No comment recorded yet.";
         let activeProject = 'dashboard';
         let pendingDeleteId = null;
 
-        let taskBootstrapModal, editCtaBootstrapModal, selectPinModal, deleteBootstrapModal, resetBootstrapModal, liveToast;
+        let taskBootstrapModal, ctaBootstrapModal, ceoCommentBootstrapModal, selectPinModal, deleteBootstrapModal, liveToast;
         let progressChartInstance = null;
         let statusChartInstance = null;
 
         window.addEventListener('DOMContentLoaded', () => {
             taskBootstrapModal = new bootstrap.Modal(document.getElementById('taskModal'));
-            editCtaBootstrapModal = new bootstrap.Modal(document.getElementById('editCtaModal'));
+            ctaBootstrapModal = new bootstrap.Modal(document.getElementById('ctaModal'));
+            ceoCommentBootstrapModal = new bootstrap.Modal(document.getElementById('ceoCommentModal'));
             selectPinModal = new bootstrap.Modal(document.getElementById('selectPinModal'));
             deleteBootstrapModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            resetBootstrapModal = new bootstrap.Modal(document.getElementById('resetModal'));
             liveToast = new bootstrap.Toast(document.getElementById('liveToast'));
 
             initTheme();
@@ -691,7 +690,8 @@
                     const data = await response.json();
                     if (data.record) {
                         tasks = data.record.tasks || [];
-                        standaloneCtaText = data.record.standaloneCtaText || DEFAULT_CTA_TEXT;
+                        ctaList = data.record.ctaList || (data.record.standaloneCtaText ? [data.record.standaloneCtaText] : [...DEFAULT_CTA_LIST]);
+                        ceoComment = data.record.ceoComment || "No comment recorded yet.";
                     }
                 }
             } catch (err) {
@@ -711,9 +711,10 @@
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.record && JSON.stringify(data.record.tasks) !== JSON.stringify(tasks)) {
+                    if (data.record && (JSON.stringify(data.record.tasks) !== JSON.stringify(tasks) || JSON.stringify(data.record.ctaList) !== JSON.stringify(ctaList) || data.record.ceoComment !== ceoComment)) {
                         tasks = data.record.tasks || [];
-                        standaloneCtaText = data.record.standaloneCtaText || DEFAULT_CTA_TEXT;
+                        ctaList = data.record.ctaList || (data.record.standaloneCtaText ? [data.record.standaloneCtaText] : [...DEFAULT_CTA_LIST]);
+                        ceoComment = data.record.ceoComment || "No comment recorded yet.";
                         if (activeProject === 'dashboard') {
                             renderDashboard();
                             updateCharts();
@@ -727,7 +728,7 @@
         }
 
         async function saveCloudData() {
-            const payload = { tasks, standaloneCtaText };
+            const payload = { tasks, ctaList, ceoComment };
             try {
                 await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
                     method: 'PUT',
@@ -742,18 +743,6 @@
             }
         }
 
-        // Dynamically calculate days left until 31-12-2026 based on browser's current date
-        function calculateDaysToDeadline() {
-            const today = new Date();
-            // Reset time part to compare pure calendar dates if desired, or use exact timestamps
-            today.setHours(0, 0, 0, 0);
-            const deadline = new Date('2026-12-31T00:00:00');
-            const diffTime = deadline - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            return diffDays > 0 ? diffDays : 0;
-        }
-
-        // Overall progress calculation based on the sum of all 6 projects' completion percentage divided by 600%
         function calculateOverallProgress() {
             const bloom = getProjectProgress('BLOOM');
             const olab = getProjectProgress('O-Lab');
@@ -776,7 +765,7 @@
         }
 
         function updateKPIs() {
-            document.getElementById('kpiDaysRemaining').textContent = calculateDaysToDeadline();
+            document.getElementById('ceoCommentDisplay').textContent = ceoComment;
             document.getElementById('kpiOverallProgress').textContent = `${calculateOverallProgress()}%`;
             document.getElementById('kpiActiveTasks').textContent = tasks.filter(t => t.status !== 'Completed').length;
             document.getElementById('totalTasksBadge').textContent = `${tasks.length} Tasks Total`;
@@ -799,99 +788,153 @@
             updateKPIs();
         }
 
-        function getPinnedTask() {
-            return tasks.find(t => t.isPinned) || null;
+        function getPinnedTasks() {
+            return tasks.filter(t => t.isPinned);
         }
 
         function renderSplitHeroSection() {
             const leftCard = document.getElementById('heroLeftTaskCard');
             const rightCard = document.getElementById('heroRightCtaCard');
-            const pinnedTask = getPinnedTask();
+            const pinnedTasks = getPinnedTasks();
 
-            if (!pinnedTask) {
+            if (pinnedTasks.length === 0) {
                 leftCard.innerHTML = `
                     <div>
                         <div class="d-flex align-items-center gap-2 text-primary fw-bold mb-2">
                             <i class="fa-solid fa-thumbtack fs-5"></i>
-                            <span class="text-uppercase micro-text tracking-wider">Current Task in Focus</span>
+                            <span class="text-uppercase micro-text tracking-wider">Current Tasks in Focus (0 / 2)</span>
                         </div>
-                        <h4 class="fw-bold mb-2 text-body">No Task Currently Pinned</h4>
-                        <p class="text-secondary small mb-0">Select a critical milestone task from any project to pin and track live.</p>
+                        <h4 class="fw-bold mb-2 text-body">No Tasks Currently Pinned</h4>
+                        <p class="text-secondary small mb-0">Select up to 2 critical milestone tasks to pin and track live.</p>
                     </div>
                     <div class="pt-3 mt-3 border-top border-secondary-subtle">
                         <button class="btn btn-outline-primary btn-sm rounded-3 fw-semibold" onclick="promptSelectPinTask()">
-                            <i class="fa-solid fa-thumbtack me-1"></i> Select Task to Pin
+                            <i class="fa-solid fa-thumbtack me-1"></i> Select Tasks to Pin
                         </button>
                     </div>
                 `;
             } else {
-                const statusClass = `badge-status-${pinnedTask.status.toLowerCase().replace(/\s+/g, '')}`;
                 leftCard.innerHTML = `
-                    <div>
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-primary text-white"><i class="fa-solid fa-thumbtack me-1"></i> Current Focus</span>
-                                <span class="badge bg-body-tertiary text-secondary border">${pinnedTask.project}</span>
+                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2 text-primary fw-bold">
+                                <i class="fa-solid fa-thumbtack fs-5"></i>
+                                <span class="text-uppercase micro-text tracking-wider">Current Tasks in Focus (${pinnedTasks.length} / 2)</span>
                             </div>
-                            <span class="badge ${statusClass}">${pinnedTask.status}</span>
+                            <button class="btn btn-sm btn-outline-primary rounded-3 py-0 px-2" onclick="promptSelectPinTask()"><i class="fa-solid fa-arrow-rotate-right me-1"></i> Manage Pins</button>
                         </div>
-                        <h5 class="fw-bold text-body mb-2" style="white-space: pre-line;">${escapeHtml(pinnedTask.description)}</h5>
-                        ${pinnedTask.nextAction ? `
-                            <div class="p-2 rounded bg-body-tertiary border mb-3">
-                                <span class="micro-text text-secondary d-block fw-bold text-uppercase">Next Immediate Action:</span>
-                                <span class="small fw-semibold text-primary"><i class="fa-solid fa-angles-right me-1"></i> ${escapeHtml(pinnedTask.nextAction)}</span>
-                            </div>
-                        ` : ''}
-                        <div class="mb-2">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="small text-secondary">Task Completion</span>
-                                <span class="small fw-bold text-primary">${pinnedTask.progress}%</span>
-                            </div>
-                            <div class="progress progress-slim">
-                                <div class="progress-bar bg-primary" style="width: ${pinnedTask.progress}%"></div>
-                            </div>
+                        <div class="row g-2">
+                            ${pinnedTasks.map(pt => {
+                                const statusClass = `badge-status-${pt.status.toLowerCase().replace(/\s+/g, '')}`;
+                                return `
+                                    <div class="col-12 ${pinnedTasks.length > 1 ? 'col-md-6' : ''}">
+                                        <div class="p-2.5 rounded border bg-body-tertiary h-100 d-flex flex-column justify-content-between">
+                                            <div>
+                                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                                    <span class="badge bg-body text-secondary border small">${pt.project}</span>
+                                                    <span class="badge ${statusClass} small">${pt.status}</span>
+                                                </div>
+                                                <div class="fw-bold text-body small mb-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${escapeHtml(pt.description)}</div>
+                                            </div>
+                                            <div class="d-flex align-items-center justify-content-between pt-2 border-top border-secondary-subtle">
+                                                <span class="micro-text fw-bold text-primary">${pt.progress}% Complete</span>
+                                                <button class="btn btn-link btn-sm text-danger p-0 text-decoration-none small" onclick="togglePin('${pt.id}')">Unpin</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
                         </div>
-                    </div>
-                    <div class="d-flex align-items-center justify-content-between pt-3 border-top border-secondary-subtle">
-                        <button class="btn btn-sm btn-outline-secondary rounded-3" onclick="togglePin('${pinnedTask.id}')"><i class="fa-solid fa-thumbtack-slash me-1"></i> Unpin</button>
-                        <button class="btn btn-sm btn-outline-primary rounded-3" onclick="promptSelectPinTask()"><i class="fa-solid fa-arrow-rotate-right me-1"></i> Switch</button>
                     </div>
                 `;
             }
 
             rightCard.innerHTML = `
-                <div>
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="text-uppercase micro-text fw-bold text-warning"><i class="fa-solid fa-bullhorn me-1"></i> Program Call To Action</span>
-                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Directive</span>
+                <div class="d-flex flex-column justify-content-between h-100">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-uppercase micro-text fw-bold text-warning"><i class="fa-solid fa-bullhorn me-1"></i> Program Call To Action Directives</span>
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">${ctaList.length} Active</span>
+                        </div>
+                        <div class="d-flex flex-column gap-2 my-2 overflow-auto" style="max-height: 130px;">
+                            ${ctaList.map((cta, index) => `
+                                <div class="p-2 rounded-3 bg-white bg-opacity-75 border border-warning-subtle shadow-sm d-flex justify-content-between align-items-center">
+                                    <p class="small fw-bold text-body mb-0 pe-2" style="color: #0f172a; white-space: pre-line;">"${escapeHtml(cta)}"</p>
+                                    <div class="d-flex gap-1 flex-shrink-0">
+                                        <button class="btn btn-sm btn-link text-warning p-0" onclick="openEditCtaModal(${index})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="btn btn-sm btn-link text-danger p-0" onclick="deleteCtaDirective(${index})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
-                    <div class="p-3 rounded-3 bg-white bg-opacity-75 border border-warning-subtle shadow-sm my-2">
-                        <p class="fs-6 fw-bold text-body mb-0" style="line-height: 1.5; color: #0f172a; white-space: pre-line;">"${escapeHtml(standaloneCtaText)}"</p>
+                    <div class="pt-2 border-top border-warning-subtle d-flex align-items-center justify-content-between">
+                        <span class="micro-text text-secondary">Multi-Directive Board</span>
+                        <button class="btn btn-warning btn-sm rounded-3 d-flex align-items-center gap-1 fw-bold text-dark" onclick="openAddCtaModal()"><i class="fa-solid fa-plus"></i> Add Directive</button>
                     </div>
-                </div>
-                <div class="pt-3 border-top border-warning-subtle d-flex align-items-center justify-content-between">
-                    <span class="micro-text text-secondary">Live Synced Notice</span>
-                    <button class="btn btn-warning btn-sm rounded-3 d-flex align-items-center gap-1 fw-bold text-dark" onclick="openEditCtaModal()"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
                 </div>
             `;
         }
 
-        function openEditCtaModal() {
-            document.getElementById('ctaTextInput').value = standaloneCtaText;
-            editCtaBootstrapModal.show();
+        function openAddCtaModal() {
+            document.getElementById('ctaModalTitle').textContent = 'Add Program Call To Action';
+            document.getElementById('ctaIndexInput').value = '';
+            document.getElementById('ctaTextInput').value = '';
+            ctaBootstrapModal.show();
+        }
+
+        function openEditCtaModal(index) {
+            document.getElementById('ctaModalTitle').textContent = 'Edit Program Call To Action';
+            document.getElementById('ctaIndexInput').value = index;
+            document.getElementById('ctaTextInput').value = ctaList[index];
+            ctaBootstrapModal.show();
         }
 
         function saveCtaDirective() {
+            const indexVal = document.getElementById('ctaIndexInput').value;
             const inputVal = document.getElementById('ctaTextInput').value.trim();
             if (!inputVal) {
                 showToast('Directive cannot be empty.', 'danger');
                 return;
             }
-            standaloneCtaText = inputVal;
+            if (indexVal === '') {
+                ctaList.push(inputVal);
+            } else {
+                ctaList[parseInt(indexVal)] = inputVal;
+            }
             saveCloudData();
-            editCtaBootstrapModal.hide();
-            showToast('CTA directive updated live!');
+            ctaBootstrapModal.hide();
+            showToast('CTA directive updated successfully!');
             renderDashboard();
+        }
+
+        function deleteCtaDirective(index) {
+            if (ctaList.length <= 1) {
+                showToast('You must maintain at least one CTA directive.', 'danger');
+                return;
+            }
+            ctaList.splice(index, 1);
+            saveCloudData();
+            showToast('CTA directive removed.');
+            renderDashboard();
+        }
+
+        function openCeoCommentModal() {
+            document.getElementById('ceoCommentInput').value = ceoComment;
+            ceoCommentBootstrapModal.show();
+        }
+
+        function saveCeoComment() {
+            const inputVal = document.getElementById('ceoCommentInput').value.trim();
+            if (!inputVal) {
+                showToast('Comment cannot be empty.', 'danger');
+                return;
+            }
+            ceoComment = inputVal;
+            saveCloudData();
+            ceoCommentBootstrapModal.hide();
+            showToast('CEO comment updated live!');
+            updateKPIs();
         }
 
         function renderPortfolioTable() {
@@ -1069,7 +1112,7 @@
                     </td>
                     <td class="fw-bold small text-secondary">${task.id}</td>
                     <td><span class="fw-semibold text-body d-block" style="white-space: pre-line;">${escapeHtml(task.description)}</span></td>
-                    <td><span class="small text-primary fw-medium">${escapeHtml(task.nextAction || 'None')}</span></td>
+                    <td><span class="small text-secondary fw-medium">${escapeHtml(task.nextAction || 'None')}</span></td>
                     <td><span class="badge ${statusClass}">${task.status}</span></td>
                     <td>
                         <div class="d-flex align-items-center gap-2">
@@ -1118,15 +1161,19 @@
         function openTaskModalForCurrentProject() { openTaskModal(null); }
 
         function togglePin(taskId) {
-            tasks = tasks.map(t => {
-                if (t.id === taskId) {
-                    const nextState = !t.isPinned;
-                    if (nextState) tasks.forEach(ot => ot.isPinned = false);
-                    return { ...t, isPinned: nextState };
-                } else {
-                    return { ...t, isPinned: false };
+            const currentPinned = tasks.filter(t => t.isPinned);
+            const targetTask = tasks.find(t => t.id === taskId);
+            if (!targetTask) return;
+
+            if (targetTask.isPinned) {
+                targetTask.isPinned = false;
+            } else {
+                if (currentPinned.length >= 2) {
+                    showToast('You can only pin a maximum of 2 tasks at a time.', 'danger');
+                    return;
                 }
-            });
+                targetTask.isPinned = true;
+            }
             saveCloudData();
             showToast('Task focus updated.');
             activeProject === 'dashboard' ? renderDashboard() : renderProjectView(activeProject);
@@ -1136,23 +1183,20 @@
             const listGroup = document.getElementById('pinTaskListGroup');
             listGroup.innerHTML = tasks.length === 0 ? '<div class="p-4 text-center text-secondary small">No tasks created yet.</div>' :
                 tasks.map(t => `
-                    <button class="list-group-item list-group-item-action p-3 border-bottom border-secondary-subtle" onclick="selectAndPinTask('${t.id}')">
-                        <div class="d-flex align-items-center justify-content-between mb-1">
-                            <span class="badge bg-body-tertiary text-secondary border">${t.project}</span>
-                            <span class="small text-muted">${t.id}</span>
+                    <div class="list-group-item p-3 border-bottom border-secondary-subtle d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge bg-body-tertiary text-secondary border">${t.project}</span>
+                                <span class="small text-muted">${t.id}</span>
+                            </div>
+                            <div class="fw-bold text-body small mb-0" style="white-space: pre-line;">${escapeHtml(t.description)}</div>
                         </div>
-                        <div class="fw-bold text-body mb-1" style="white-space: pre-line;">${escapeHtml(t.description)}</div>
-                    </button>
+                        <button class="btn btn-sm ${t.isPinned ? 'btn-danger' : 'btn-outline-primary'} rounded-3 ms-2 flex-shrink-0" onclick="togglePin('${t.id}')">
+                            ${t.isPinned ? 'Unpin' : 'Pin'}
+                        </button>
+                    </div>
                 `).join('');
             selectPinModal.show();
-        }
-
-        function selectAndPinTask(taskId) {
-            tasks.forEach(t => t.isPinned = (t.id === taskId));
-            saveCloudData();
-            selectPinModal.hide();
-            showToast('Task pinned successfully.');
-            renderDashboard();
         }
 
         function syncProgressWithStatus() {
@@ -1182,7 +1226,13 @@
             const progress = parseInt(document.getElementById('taskProgressRange').value) || 0;
             const isPinned = document.getElementById('taskPinnedCheck').checked;
 
-            if (isPinned) tasks.forEach(t => t.isPinned = false);
+            if (isPinned) {
+                const currentPinned = tasks.filter(t => t.isPinned && t.id !== id);
+                if (currentPinned.length >= 2) {
+                    showToast('Maximum 2 tasks can be pinned at once.', 'danger');
+                    return;
+                }
+            }
 
             if (id) {
                 const index = tasks.findIndex(t => t.id === id);
@@ -1216,17 +1266,6 @@
             activeProject === 'dashboard' ? (renderDashboard(), updateCharts()) : (renderProjectView(activeProject), updateKPIs());
         }
 
-        function confirmResetAll() { resetBootstrapModal.show(); }
-
-        function executeResetAll() {
-            tasks = [];
-            standaloneCtaText = DEFAULT_CTA_TEXT;
-            saveCloudData();
-            resetBootstrapModal.hide();
-            showToast('All program data reset.');
-            activeProject === 'dashboard' ? (renderDashboard(), updateCharts()) : (renderProjectView(activeProject), updateKPIs());
-        }
-
         function resetFilters() {
             document.getElementById('taskSearchInput').value = '';
             document.getElementById('filterStatus').value = 'ALL';
@@ -1234,7 +1273,7 @@
         }
 
         function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ tasks, standaloneCtaText }, null, 2));
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ tasks, ctaList, ceoComment }, null, 2));
             const dl = document.createElement('a');
             dl.setAttribute("href", dataStr);
             dl.setAttribute("download", `CRM_Rollout_Backup.json`);
@@ -1254,7 +1293,9 @@
                 try {
                     const imported = JSON.parse(evt.target.result);
                     tasks = Array.isArray(imported) ? imported : (imported.tasks || []);
-                    if (imported.standaloneCtaText) standaloneCtaText = imported.standaloneCtaText;
+                    if (imported.ctaList) ctaList = imported.ctaList;
+                    else if (imported.standaloneCtaText) ctaList = [imported.standaloneCtaText];
+                    if (imported.ceoComment) ceoComment = imported.ceoComment;
                     saveCloudData();
                     showToast('Import successful.');
                     renderDashboard();
