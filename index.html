@@ -335,7 +335,7 @@
                                     <h3 class="display-6 fw-extrabold mb-0 text-body" id="kpiOverallProgress">0%</h3>
                                     <i class="fa-solid fa-chart-line text-success fs-4 opacity-75"></i>
                                 </div>
-                                <span class="text-secondary micro-text">Cumulative Ratio (251 / 600 Tasks)</span>
+                                <span class="text-secondary micro-text">Sum of Project Pct (Out of 600%)</span>
                             </div>
                         </div>
 
@@ -742,18 +742,30 @@
             }
         }
 
+        // Dynamically calculate days left until 31-12-2026 based on browser's current date
         function calculateDaysToDeadline() {
             const today = new Date();
-            const diffTime = HARD_DEADLINE - today;
+            // Reset time part to compare pure calendar dates if desired, or use exact timestamps
+            today.setHours(0, 0, 0, 0);
+            const deadline = new Date('2026-12-31T00:00:00');
+            const diffTime = deadline - today;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             return diffDays > 0 ? diffDays : 0;
         }
 
-        // Updated Overall Progress calculation based on total completed tasks out of 600
+        // Overall progress calculation based on the sum of all 6 projects' completion percentage divided by 600%
         function calculateOverallProgress() {
-            const completedCount = tasks.filter(t => t.status === 'Completed' || t.progress === 100).length;
-            const totalTasks = 600;
-            return Number(((completedCount / totalTasks) * 100).toFixed(1));
+            const bloom = getProjectProgress('BLOOM');
+            const olab = getProjectProgress('O-Lab');
+            const partners = getProjectProgress('BLOOM partners');
+            const hrFinance = getProjectProgress('HR and finance');
+            const bloom404 = getProjectProgress('Bloom 404');
+            const beautyWays = getProjectProgress('Beauty ways');
+
+            const totalSum = bloom + olab + partners + hrFinance + bloom404 + beautyWays;
+            const maxPossible = 600;
+            
+            return Number(((totalSum / maxPossible) * 100).toFixed(2));
         }
 
         function getProjectProgress(projectKey) {
