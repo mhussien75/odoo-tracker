@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise CRM Rollout Program Tracker</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --crm-bg: #f8fafc;
+            --crm-card-bg: #ffffff;
+            --crm-card-border: #e2e8f0;
+            --crm-text-primary: #0f172a;
+            --crm-text-muted: #64748b;
+            --crm-accent-primary: #2563eb;
+            --crm-accent-amber: #d97706;
+            --crm-accent-emerald: #059669;
+            --crm-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        [data-bs-theme="dark"] {
+            --crm-bg: #0f172a;
+            --crm-card-bg: #1e293b;
+            --crm-card-border: #334155;
+            --crm-text-primary: #f8fafc;
+            --crm-text-muted: #94a3b8;
+        }
+
+        body {
+            font-family: var(--crm-font);
+            background-color: var(--crm-bg);
+            color: var(--crm-text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .glass-card {
+            background-color: var(--crm-card-bg);
+            border: 1px solid var(--crm-card-border);
+            border-radius: 14px;
+            box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.04), 0 1px 3px 0 rgba(15, 23, 42, 0.02);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .glass-card:hover {
+            box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08);
+        }
+
+        .kpi-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--crm-accent-primary);
+        }
+
+        .kpi-card.kpi-deadline::before { background: var(--crm-accent-amber); }
+        .kpi-card.kpi-progress::before { background: var(--crm-accent-emerald); }
+        .kpi-card.kpi-active::before { background: var(--crm-accent-primary); }
+
+        .nav-tabs-custom {
+            border-bottom: 2px solid var(--crm-card-border);
+        }
+
+        .nav-tabs-custom .nav-link {
+            border: none;
+            color: var(--crm-text-muted);
+            font-weight: 600;
+            padding: 0.8rem 1.25rem;
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+            margin-bottom: -2px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-tabs-custom .nav-link:hover {
+            color: var(--crm-accent-primary);
+            border-color: rgba(37, 99, 235, 0.3);
+        }
+
+        .nav-tabs-custom .nav-link.active {
+            color: var(--crm-accent-primary);
+            border-bottom-color: var(--crm-accent-primary);
+            background: transparent;
+        }
+
+        .badge-status-notstarted { background-color: rgba(148, 163, 184, 0.15); color: #475569; border: 1px solid rgba(148, 163, 184, 0.3); }
+        .badge-status-inprogress { background-color: rgba(37, 99, 235, 0.12); color: #1d4ed8; border: 1px solid rgba(37, 99, 235, 0.25); }
+        .badge-status-onhold { background-color: rgba(217, 119, 6, 0.12); color: #b45309; border: 1px solid rgba(217, 119, 6, 0.25); }
+        .badge-status-completed { background-color: rgba(5, 150, 105, 0.12); color: #047857; border: 1px solid rgba(5, 150, 105, 0.25); }
+
+        .project-card {
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .project-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--crm-accent-primary);
+        }
+
+        .progress-slim {
+            height: 8px;
+            border-radius: 6px;
+            background-color: rgba(148, 163, 184, 0.2);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            color: var(--crm-text-muted);
+            opacity: 0.4;
+        }
+
+        .table-custom {
+            --bs-table-bg: transparent;
+            --bs-table-border-color: var(--crm-card-border);
+        }
+
+        .table-custom th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--crm-text-muted);
+            font-weight: 700;
+            padding: 0.9rem 0.75rem;
+        }
+
+        .table-custom td {
+            padding: 0.85rem 0.75rem;
+            vertical-align: middle;
+        }
+
+        .hero-split-card {
+            min-height: 240px;
+        }
+
+        .micro-text {
+            font-size: 0.72rem;
+            letter-spacing: 0.03em;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: background 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background-color: rgba(148, 163, 184, 0.15);
+        }
+
+        .cta-banner-bg {
+            background: linear-gradient(135deg, rgba(217, 119, 6, 0.06) 0%, rgba(245, 158, 11, 0.12) 100%);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="navbar navbar-expand-lg border-bottom border-secondary-subtle px-3 px-lg-4 py-3 glass-card rounded-0 mb-4">
+        <div class="container-fluid p-0">
+            <a class="navbar-brand d-flex align-items-center gap-3 text-reset" href="#" onclick="setActiveProjectView('dashboard')">
+                <div class="bg-primary text-white rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                    <i class="fa-solid fa-diagram-project fs-5"></i>
+                </div>
+                <div>
+                    <h1 class="h5 mb-0 fw-bold tracking-tight">Enterprise CRM Rollout</h1>
+                    <span class="text-secondary small">Program Management Office (PMO)</span>
+                </div>
+            </a>
+
+            <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+                <div class="d-none d-md-flex align-items-center gap-2 bg-body-tertiary px-3 py-1.5 rounded-pill border border-secondary-subtle me-2">
+                    <i class="fa-solid fa-flag-checkered text-warning"></i>
+                    <span class="small fw-semibold">Hard Cutoff: <span class="text-primary fw-bold">31 Dec 2026</span></span>
+                </div>
+
+                <button class="btn btn-primary rounded-3 d-flex align-items-center gap-2 fw-semibold" onclick="openTaskModal()">
+                    <i class="fa-solid fa-plus"></i>
+                    <span class="d-none d-sm-inline">New Task</span>
+                </button>
+
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary rounded-3 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                        <li><a class="dropdown-item" href="#" onclick="openEditCtaModal()"><i class="fa-solid fa-bullhorn me-2 text-warning"></i>Edit Program CTA Directive</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" onclick="exportData()"><i class="fa-solid fa-download me-2 text-primary"></i>Export Backup JSON</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="triggerImport()"><i class="fa-solid fa-upload me-2 text-info"></i>Import Backup JSON</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="confirmResetAll()"><i class="fa-solid fa-trash-can me-2"></i>Reset All Data</a></li>
+                    </ul>
+                </div>
+
+                <button class="btn btn-outline-secondary rounded-3 ms-1" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light/Dark Mode">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <input type="file" id="importFileInput" style="display: none;" accept=".json" onchange="importData(event)">
+
+    <main class="container-fluid px-3 px-lg-4 mb-5 flex-grow-1">
+        
+        <ul class="nav nav-tabs nav-tabs-custom mb-4 overflow-x-auto flex-nowrap" id="mainTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-dashboard" data-bs-toggle="tab" data-bs-target="#view-dashboard" type="button" role="tab" onclick="setActiveProjectView('dashboard')">
+                    <i class="fa-solid fa-chart-pie me-2"></i>Dashboard
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-bloom" data-bs-toggle="tab" data-bs-target="#view-project" type="button" role="tab" onclick="setActiveProjectView('BLOOM')">
+                    <i class="fa-solid fa-seedling me-2 text-success"></i>BLOOM
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-olab" data-bs-toggle="tab" data-bs-target="#view-project" type="button" role="tab" onclick="setActiveProjectView('O-Lab')">
+                    <i class="fa-solid fa-flask me-2 text-info"></i>O-Lab
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-partners" data-bs-toggle="tab" data-bs-target="#view-project" type="button" role="tab" onclick="setActiveProjectView('BLOOM partners')">
+                    <i class="fa-solid fa-handshake me-2 text-primary"></i>BLOOM partners
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-hrfinance" data-bs-toggle="tab" data-bs-target="#view-project" type="button" role="tab" onclick="setActiveProjectView('HR and finance')">
+                    <i class="fa-solid fa-calculator me-2 text-warning"></i>HR and finance
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-bloom404" data-bs-toggle="tab" data-bs-target="#view-project" type="button" role="tab" onclick="setActiveProjectView('Bloom 404')">
+                    <i class="fa-solid fa-bug me-2 text-danger"></i>Bloom 404
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-beautyways" data-bs-toggle="tab" data-bs-target="#view-project" type="button" role="tab" onclick="setActiveProjectView('Beauty ways')">
+                    <i class="fa-solid fa-sparkles me-2 text-secondary"></i>Beauty ways
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="mainTabContent">
+            
+            <div class="tab-pane fade show active" id="view-dashboard" role="tabpanel">
+                
+                <!-- SPLIT HERO SECTION (Left: Current Task in Focus | Right: Call to Action) -->
+                <div class="row g-3 mb-4">
+                    <!-- Left: Current Task in Focus -->
+                    <div class="col-12 col-lg-6">
+                        <div class="glass-card p-4 hero-split-card d-flex flex-column justify-content-between h-100 border-start border-primary border-4" id="heroLeftTaskCard">
+                            <!-- Rendered dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Right: Call to Action Directive (Standalone) -->
+                    <div class="col-12 col-lg-6">
+                        <div class="glass-card p-4 hero-split-card d-flex flex-column justify-content-between h-100 border-start border-warning border-4 cta-banner-bg" id="heroRightCtaCard">
+                            <!-- Rendered dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-4">
+                        <div class="glass-card kpi-card kpi-deadline p-3 p-md-4">
+                            <span class="text-secondary small fw-bold text-uppercase d-block mb-1">Days To Deadline</span>
+                            <div class="d-flex align-items-baseline justify-content-between">
+                                <h3 class="display-6 fw-extrabold mb-0 text-body" id="kpiDaysRemaining">--</h3>
+                                <i class="fa-solid fa-hourglass-half text-warning fs-4 opacity-75"></i>
+                            </div>
+                            <span class="text-secondary micro-text">Hard Cutoff: 31 Dec 2026</span>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <div class="glass-card kpi-card kpi-progress p-3 p-md-4">
+                            <span class="text-secondary small fw-bold text-uppercase d-block mb-1">Overall Progress</span>
+                            <div class="d-flex align-items-baseline justify-content-between">
+                                <h3 class="display-6 fw-extrabold mb-0 text-body" id="kpiOverallProgress">0%</h3>
+                                <i class="fa-solid fa-chart-line text-success fs-4 opacity-75"></i>
+                            </div>
+                            <span class="text-secondary micro-text">Weighted Avg Across 6 Projects</span>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <div class="glass-card kpi-card kpi-active p-3 p-md-4">
+                            <span class="text-secondary small fw-bold text-uppercase d-block mb-1">Total Active Tasks</span>
+                            <div class="d-flex align-items-baseline justify-content-between">
+                                <h3 class="display-6 fw-extrabold mb-0 text-body" id="kpiActiveTasks">0</h3>
+                                <i class="fa-solid fa-list-check text-primary fs-4 opacity-75"></i>
+                            </div>
+                            <span class="text-secondary micro-text">In Progress, On Hold & Planned</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-lg-7">
+                        <div class="glass-card p-4 h-100">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h5 class="fw-bold mb-0 text-body"><i class="fa-solid fa-chart-bar me-2 text-primary"></i>Workstream Progress</h5>
+                                <span class="badge bg-body-tertiary text-secondary border">6 Workstreams</span>
+                            </div>
+                            <div style="position: relative; height:240px;">
+                                <canvas id="projectProgressChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-5">
+                        <div class="glass-card p-4 h-100">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h5 class="fw-bold mb-0 text-body"><i class="fa-solid fa-chart-pie me-2 text-info"></i>Status Breakdown</h5>
+                                <span class="badge bg-body-tertiary text-secondary border" id="totalTasksBadge">0 Tasks</span>
+                            </div>
+                            <div style="position: relative; height:240px;" class="d-flex justify-content-center align-items-center">
+                                <canvas id="statusDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-4 mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="fw-bold mb-0 text-body"><i class="fa-solid fa-table-list me-2 text-primary"></i>Program Portfolio Summary</h5>
+                        <span class="small text-secondary">Overall Completion & Status by Project</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-custom align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Workstream / Project</th>
+                                    <th style="width: 140px;">Total Tasks</th>
+                                    <th style="width: 140px;">Completed</th>
+                                    <th>Overall Progress</th>
+                                    <th style="width: 140px;" class="text-end">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="portfolioTableBody">
+                                <!-- Rendered dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- WORKSTREAMS GRID -->
+                <h5 class="fw-bold mb-3 text-body"><i class="fa-solid fa-cubes me-2 text-primary"></i>Workstreams Grid</h5>
+                <div class="row g-3" id="projectGridContainer">
+                    <!-- Project Cards rendered via JS -->
+                </div>
+
+            </div>
+
+            <div class="tab-pane fade" id="view-project" role="tabpanel">
+                <div class="glass-card p-4">
+                    <!-- Project View Header -->
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-3 border-bottom border-secondary-subtle">
+                        <div>
+                            <div class="d-flex align-items-center gap-3 mb-1">
+                                <h3 class="fw-bold mb-0 text-body" id="currentProjectTitle">Project Title</h3>
+                                <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" id="currentProjectBadge">0 Tasks</span>
+                            </div>
+                            <span class="text-secondary small">Workstream task tracking & milestone management</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="text-end d-none d-sm-block me-2">
+                                <span class="small text-secondary d-block">Workstream Completion</span>
+                                <span class="fs-5 fw-bold text-success" id="currentProjectProgressPct">0%</span>
+                            </div>
+                            <button class="btn btn-primary rounded-3 d-flex align-items-center gap-2 fw-semibold" onclick="openTaskModalForCurrentProject()">
+                                <i class="fa-solid fa-plus"></i> Add Task
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search and Filters Bar -->
+                    <div class="row g-2 mb-3 align-items-center">
+                        <div class="col-12 col-md-7">
+                            <div class="input-group">
+                                <span class="input-group-text bg-body-tertiary border-secondary-subtle"><i class="fa-solid fa-magnifying-glass text-secondary"></i></span>
+                                <input type="text" id="taskSearchInput" class="form-control border-secondary-subtle" placeholder="Search tasks, task IDs, or next actions..." oninput="handleTableFilter()">
+                            </div>
+                        </div>
+                        <div class="col-10 col-md-4">
+                            <select id="filterStatus" class="form-select border-secondary-subtle" onchange="handleTableFilter()">
+                                <option value="ALL">All Statuses</option>
+                                <option value="Not Started">Not Started</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="On Hold">On Hold</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="col-2 col-md-1 text-end">
+                            <button class="btn btn-outline-secondary w-100" onclick="resetFilters()" title="Reset Filters"><i class="fa-solid fa-rotate-left"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-custom align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;" class="text-center">Pin</th>
+                                    <th style="width: 100px;">Task ID</th>
+                                    <th>Task Description</th>
+                                    <th style="width: 200px;">Next Action</th>
+                                    <th style="width: 130px;">Status</th>
+                                    <th style="width: 160px;">Progress</th>
+                                    <th style="width: 100px;" class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="taskTableBody">
+                                <!-- Dynamic Task Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Table Empty State -->
+                    <div id="tableEmptyState" class="text-center py-5 d-none">
+                        <i class="fa-solid fa-clipboard-list empty-state-icon mb-3"></i>
+                        <h5 class="fw-bold text-body">No tasks found</h5>
+                        <p class="text-secondary small max-w-md mx-auto mb-3">There are no tasks matching your criteria in this workstream.</p>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="openTaskModalForCurrentProject()">
+                            <i class="fa-solid fa-plus me-1"></i> Add Task to <span id="emptyStateProjectName">Project</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content glass-card border-secondary-subtle">
+                <div class="modal-header border-bottom border-secondary-subtle">
+                    <h5 class="modal-title fw-bold text-body" id="taskModalLabel">
+                        <i class="fa-solid fa-pen-to-square text-primary me-2"></i><span id="modalTitleText">Add New Task</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="taskForm" onsubmit="handleTaskFormSubmit(event)">
+                    <div class="modal-body">
+                        <input type="hidden" id="taskIdInput">
+                        
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label for="taskProjectSelect" class="form-label small fw-bold">Workstream / Project <span class="text-danger">*</span></label>
+                                <select class="form-select border-secondary-subtle" id="taskProjectSelect" required>
+                                    <option value="BLOOM">BLOOM</option>
+                                    <option value="O-Lab">O-Lab</option>
+                                    <option value="BLOOM partners">BLOOM partners</option>
+                                    <option value="HR and finance">HR and finance</option>
+                                    <option value="Bloom 404">Bloom 404</option>
+                                    <option value="Beauty ways">Beauty ways</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label for="taskNextActionInput" class="form-label small fw-bold">Next Immediate Action</label>
+                                <input type="text" class="form-control border-secondary-subtle" id="taskNextActionInput" placeholder="e.g. Schedule review meeting with leads">
+                            </div>
+
+                            <!-- TASK DESCRIPTION WITH SPACIOUS TEXTAREA (rows="4") -->
+                            <div class="col-12">
+                                <label for="taskDescInput" class="form-label small fw-bold">Task Description & Notes <span class="text-danger">*</span></label>
+                                <textarea class="form-control border-secondary-subtle p-3" id="taskDescInput" rows="4" placeholder="Enter full task details, requirements, scope, or notes here..." required></textarea>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label for="taskStatusSelect" class="form-label small fw-bold">Status <span class="text-danger">*</span></label>
+                                <select class="form-select border-secondary-subtle" id="taskStatusSelect" onchange="syncProgressWithStatus()" required>
+                                    <option value="Not Started">Not Started</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="On Hold">On Hold</option>
+                                    <option value="Completed">Completed</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label for="taskProgressRange" class="form-label small fw-bold">Completion Percentage: <span id="taskProgressVal" class="text-primary fw-bold">0</span>%</label>
+                                <input type="range" class="form-range" id="taskProgressRange" min="0" max="100" step="5" value="0" oninput="updateProgressLabel(this.value)">
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" id="taskPinnedCheck">
+                                    <label class="form-check-label fw-semibold small" for="taskPinnedCheck">
+                                        <i class="fa-solid fa-thumbtack text-primary me-1"></i> Feature as Current Task in Focus on Hero Banner
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top border-secondary-subtle">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4" id="saveTaskBtn">Save Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Standalone CTA Edit Modal -->
+    <div class="modal fade" id="editCtaModal" tabindex="-1" aria-labelledby="editCtaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card border-warning-subtle">
+                <div class="modal-header border-bottom border-secondary-subtle">
+                    <h5 class="modal-title fw-bold text-body" id="editCtaModalLabel">
+                        <i class="fa-solid fa-bullhorn text-warning me-2"></i>Edit Program Call To Action Directive
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-secondary small mb-3">Update the overarching program directive displayed prominently on the main dashboard hero banner.</p>
+                    <div class="mb-3">
+                        <label for="ctaTextInput" class="form-label fw-bold small">Call to Action Directive Text</label>
+                        <textarea class="form-control border-secondary-subtle p-3" id="ctaTextInput" rows="4" placeholder="Enter overarching directive notice..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary-subtle">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning px-4 fw-semibold text-dark" onclick="saveCtaDirective()">Save Directive</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Select Task to Pin Modal -->
+    <div class="modal fade" id="selectPinModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card border-secondary-subtle">
+                <div class="modal-header border-bottom border-secondary-subtle">
+                    <h5 class="modal-title fw-bold text-body"><i class="fa-solid fa-thumbtack text-primary me-2"></i>Select Task to Pin in Focus</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="list-group list-group-flush" id="pinTaskListGroup">
+                        <!-- Dynamic list of tasks for selection -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content glass-card border-danger-subtle">
+                <div class="modal-body text-center p-4">
+                    <div class="text-danger mb-3">
+                        <i class="fa-solid fa-triangle-exclamation fs-1"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2 text-body">Delete Task?</h5>
+                    <p class="text-secondary small mb-4">Are you sure you want to delete task <span id="deleteTaskId" class="fw-bold text-body"></span>? This action cannot be undone.</p>
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger btn-sm px-3" onclick="executeDeleteTask()">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Confirmation Modal -->
+    <div class="modal fade" id="resetModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content glass-card border-danger-subtle">
+                <div class="modal-body text-center p-4">
+                    <div class="text-danger mb-3">
+                        <i class="fa-solid fa-trash-can fs-1"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2 text-body">Reset All Program Data?</h5>
+                    <p class="text-secondary small mb-4">This will clear all tasks and reset the call to action notice. Ensure you export a backup first if needed.</p>
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger btn-sm px-3" onclick="executeResetAll()">Reset Data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast align-items-center border-0 glass-card shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-2" id="toastMessage">
+                    <i class="fa-solid fa-circle-check text-success"></i> Action completed successfully.
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const HARD_DEADLINE = new Date('2026-12-31T23:59:59');
+        const TASKS_STORAGE_KEY = 'crm_tasks_data';
+        const CTA_STORAGE_KEY = 'crm_standalone_cta';
+
+        const DEFAULT_CTA_TEXT = "Ensure all cross-functional leads finalize security compliance sign-offs and execute end-to-end integration testing before the Q4 cutoff date.";
+
+        // 6 Exact Workstreams / Projects (NO descriptions)
+        const PROJECTS = [
+            { key: 'BLOOM', title: 'BLOOM', icon: 'fa-seedling', color: '#10b981' },
+            { key: 'O-Lab', title: 'O-Lab', icon: 'fa-flask', color: '#06b6d4' },
+            { key: 'BLOOM partners', title: 'BLOOM partners', icon: 'fa-handshake', color: '#2563eb' },
+            { key: 'HR and finance', title: 'HR and finance', icon: 'fa-calculator', color: '#d97706' },
+            { key: 'Bloom 404', title: 'Bloom 404', icon: 'fa-bug', color: '#dc2626' },
+            { key: 'Beauty ways', title: 'Beauty ways', icon: 'fa-sparkles', color: '#9333ea' }
+        ];
+
+        let tasks = [];
+        let standaloneCtaText = DEFAULT_CTA_TEXT;
+        let activeProject = 'dashboard';
+        let pendingDeleteId = null;
+
+        // Modal & Chart Instances
+        let taskBootstrapModal = null;
+        let editCtaBootstrapModal = null;
+        let selectPinModal = null;
+        let deleteBootstrapModal = null;
+        let resetBootstrapModal = null;
+        let liveToast = null;
+        let progressChartInstance = null;
+        let statusChartInstance = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStorageData();
+
+            taskBootstrapModal = new bootstrap.Modal(document.getElementById('taskModal'));
+            editCtaBootstrapModal = new bootstrap.Modal(document.getElementById('editCtaModal'));
+            selectPinModal = new bootstrap.Modal(document.getElementById('selectPinModal'));
+            deleteBootstrapModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            resetBootstrapModal = new bootstrap.Modal(document.getElementById('resetModal'));
+            liveToast = new bootstrap.Toast(document.getElementById('liveToast'));
+
+            initTheme();
+            renderDashboard();
+            initCharts();
+        });
+
+        function loadStorageData() {
+            try {
+                const storedTasks = localStorage.getItem(TASKS_STORAGE_KEY);
+                tasks = storedTasks ? JSON.parse(storedTasks) : [];
+
+                const storedCta = localStorage.getItem(CTA_STORAGE_KEY);
+                standaloneCtaText = storedCta ? storedCta : DEFAULT_CTA_TEXT;
+            } catch (e) {
+                console.error("Failed to load data from localStorage", e);
+                tasks = [];
+                standaloneCtaText = DEFAULT_CTA_TEXT;
+            }
+        }
+
+        function saveStorageData() {
+            try {
+                localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+                localStorage.setItem(CTA_STORAGE_KEY, standaloneCtaText);
+            } catch (e) {
+                console.error("Failed to save data to localStorage", e);
+            }
+        }
+
+        function calculateDaysToDeadline() {
+            const today = new Date();
+            const diffTime = HARD_DEADLINE - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays > 0 ? diffDays : 0;
+        }
+
+        function calculateOverallProgress() {
+            if (tasks.length === 0) return 0;
+            const sum = tasks.reduce((acc, task) => acc + (parseInt(task.progress) || 0), 0);
+            return Math.round(sum / tasks.length);
+        }
+
+        function getProjectProgress(projectKey) {
+            const projectTasks = tasks.filter(t => t.project === projectKey);
+            if (projectTasks.length === 0) return 0;
+            const sum = projectTasks.reduce((acc, t) => acc + (parseInt(t.progress) || 0), 0);
+            return Math.round(sum / projectTasks.length);
+        }
+
+        function updateKPIs() {
+            document.getElementById('kpiDaysRemaining').textContent = calculateDaysToDeadline();
+            document.getElementById('kpiOverallProgress').textContent = `${calculateOverallProgress()}%`;
+            
+            const activeCount = tasks.filter(t => t.status !== 'Completed').length;
+            document.getElementById('kpiActiveTasks').textContent = activeCount;
+
+            document.getElementById('totalTasksBadge').textContent = `${tasks.length} Tasks Total`;
+        }
+
+        function setActiveProjectView(projectKey) {
+            activeProject = projectKey;
+            
+            if (projectKey === 'dashboard') {
+                renderDashboard();
+                updateCharts();
+            } else {
+                renderProjectView(projectKey);
+            }
+        }
+
+        function renderDashboard() {
+            renderSplitHeroSection();
+            renderPortfolioTable();
+            renderProjectGrid();
+            updateKPIs();
+        }
+
+        function getPinnedTask() {
+            return tasks.find(t => t.isPinned) || null;
+        }
+
+        function renderSplitHeroSection() {
+            const leftCard = document.getElementById('heroLeftTaskCard');
+            const rightCard = document.getElementById('heroRightCtaCard');
+            const pinnedTask = getPinnedTask();
+
+            // --- LEFT SIDE: CURRENT TASK IN FOCUS ---
+            if (!pinnedTask) {
+                leftCard.innerHTML = `
+                    <div>
+                        <div class="d-flex align-items-center gap-2 text-primary fw-bold mb-2">
+                            <i class="fa-solid fa-thumbtack fs-5"></i>
+                            <span class="text-uppercase micro-text tracking-wider">Current Task in Focus</span>
+                        </div>
+                        <h4 class="fw-bold mb-2 text-body">No Task Currently Pinned</h4>
+                        <p class="text-secondary small mb-0">Select a critical milestone task from any project to pin and track its live status on the program hero section.</p>
+                    </div>
+                    <div class="pt-3 mt-3 border-top border-secondary-subtle">
+                        <button class="btn btn-outline-primary btn-sm rounded-3 fw-semibold" onclick="promptSelectPinTask()">
+                            <i class="fa-solid fa-thumbtack me-1"></i> Select Task to Pin
+                        </button>
+                    </div>
+                `;
+            } else {
+                const statusClass = `badge-status-${pinnedTask.status.toLowerCase().replace(/\s+/g, '')}`;
+                
+                leftCard.innerHTML = `
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary text-white"><i class="fa-solid fa-thumbtack me-1"></i> Current Focus</span>
+                                <span class="badge bg-body-tertiary text-secondary border">${pinnedTask.project}</span>
+                            </div>
+                            <span class="badge ${statusClass}">${pinnedTask.status}</span>
+                        </div>
+                        
+                        <h5 class="fw-bold text-body mb-2" style="white-space: pre-line;">${escapeHtml(pinnedTask.description)}</h5>
+                        
+                        ${pinnedTask.nextAction ? `
+                            <div class="p-2 rounded bg-body-tertiary border mb-3">
+                                <span class="micro-text text-secondary d-block fw-bold text-uppercase">Next Immediate Action:</span>
+                                <span class="small fw-semibold text-primary"><i class="fa-solid fa-angles-right me-1"></i> ${escapeHtml(pinnedTask.nextAction)}</span>
+                            </div>
+                        ` : ''}
+
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small text-secondary">Task Completion</span>
+                                <span class="small fw-bold text-primary">${pinnedTask.progress}%</span>
+                            </div>
+                            <div class="progress progress-slim">
+                                <div class="progress-bar bg-primary" style="width: ${pinnedTask.progress}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between pt-3 border-top border-secondary-subtle">
+                        <button class="btn btn-sm btn-outline-secondary rounded-3" onclick="togglePin('${pinnedTask.id}')">
+                            <i class="fa-solid fa-thumbtack-slash me-1"></i> Unpin Task
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary rounded-3" onclick="promptSelectPinTask()">
+                            <i class="fa-solid fa-arrow-rotate-right me-1"></i> Switch Task
+                        </button>
+                    </div>
+                `;
+            }
+
+            // --- RIGHT SIDE: CALL TO ACTION / REQUIRED ACTION (STANDALONE DIRECTIVE) ---
+            rightCard.innerHTML = `
+                <div>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase micro-text fw-bold text-warning"><i class="fa-solid fa-bullhorn me-1"></i> Program Call To Action</span>
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Overarching Directive</span>
+                    </div>
+
+                    <div class="p-3 rounded-3 bg-white bg-opacity-75 border border-warning-subtle shadow-sm my-2">
+                        <p class="fs-6 fw-bold text-body mb-0" style="line-height: 1.5; color: #0f172a; white-space: pre-line;">
+                            "${escapeHtml(standaloneCtaText)}"
+                        </p>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-top border-warning-subtle d-flex align-items-center justify-content-between">
+                    <span class="micro-text text-secondary">Standalone Dashboard Notice</span>
+                    <button class="btn btn-warning btn-sm rounded-3 d-flex align-items-center gap-1 fw-bold text-dark" onclick="openEditCtaModal()">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit Call to Action
+                    </button>
+                </div>
+            `;
+        }
+
+        function openEditCtaModal() {
+            document.getElementById('ctaTextInput').value = standaloneCtaText;
+            editCtaBootstrapModal.show();
+        }
+
+        function saveCtaDirective() {
+            const inputVal = document.getElementById('ctaTextInput').value.trim();
+            if (!inputVal) {
+                showToast('Call to action directive cannot be empty.', 'danger');
+                return;
+            }
+            standaloneCtaText = inputVal;
+            saveStorageData();
+            editCtaBootstrapModal.hide();
+            showToast('Program Call To Action directive updated!');
+            renderDashboard();
+        }
+
+        function renderPortfolioTable() {
+            const tbody = document.getElementById('portfolioTableBody');
+            tbody.innerHTML = PROJECTS.map(proj => {
+                const projTasks = tasks.filter(t => t.project === proj.key);
+                const count = projTasks.length;
+                const completedCount = projTasks.filter(t => t.status === 'Completed').length;
+                const pct = getProjectProgress(proj.key);
+
+                let statusBadge = '<span class="badge badge-status-notstarted">Not Started</span>';
+                if (pct === 100 && count > 0) {
+                    statusBadge = '<span class="badge badge-status-completed">Completed</span>';
+                } else if (pct > 0) {
+                    statusBadge = '<span class="badge badge-status-inprogress">In Progress</span>';
+                }
+
+                return `
+                    <tr style="cursor: pointer;" onclick="switchToProjectTab('${proj.key}')">
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-2 p-1.5 d-flex align-items-center justify-content-center" style="background: ${proj.color}20; color: ${proj.color}; width: 32px; height: 32px;">
+                                    <i class="fa-solid ${proj.icon} small"></i>
+                                </div>
+                                <span class="fw-bold text-body">${proj.title}</span>
+                            </div>
+                        </td>
+                        <td class="fw-semibold text-body">${count} Tasks</td>
+                        <td class="text-secondary">${completedCount} Tasks</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2" style="max-width: 220px;">
+                                <div class="progress progress-slim flex-grow-1">
+                                    <div class="progress-bar" style="width: ${pct}%; background-color: ${proj.color};"></div>
+                                </div>
+                                <span class="small fw-bold" style="width: 36px;">${pct}%</span>
+                            </div>
+                        </td>
+                        <td class="text-end">${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderProjectGrid() {
+            const grid = document.getElementById('projectGridContainer');
+            grid.innerHTML = PROJECTS.map(proj => {
+                const projTasks = tasks.filter(t => t.project === proj.key);
+                const count = projTasks.length;
+                const completedCount = projTasks.filter(t => t.status === 'Completed').length;
+                const pct = getProjectProgress(proj.key);
+
+                return `
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="glass-card p-4 project-card h-100 d-flex flex-column justify-content-between" onclick="switchToProjectTab('${proj.key}')">
+                            <div>
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-3 p-2 d-flex align-items-center justify-content-center" style="background: ${proj.color}20; color: ${proj.color}; width: 38px; height: 38px;">
+                                            <i class="fa-solid ${proj.icon} fs-5"></i>
+                                        </div>
+                                        <h6 class="fw-bold mb-0 text-body">${proj.title}</h6>
+                                    </div>
+                                    <span class="badge bg-body-tertiary text-secondary border">${count} Tasks</span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="small text-secondary">Completion Progress</span>
+                                        <span class="small fw-bold text-body">${pct}%</span>
+                                    </div>
+                                    <div class="progress progress-slim">
+                                        <div class="progress-bar" style="width: ${pct}%; background-color: ${proj.color};"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between pt-2 border-top border-secondary-subtle">
+                                <span class="micro-text text-secondary">${completedCount} of ${count} Completed</span>
+                                <span class="small text-primary fw-semibold">Manage Tasks <i class="fa-solid fa-arrow-right ms-1"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function switchToProjectTab(projectKey) {
+            const tabBtnMap = {
+                'BLOOM': 'tab-bloom',
+                'O-Lab': 'tab-olab',
+                'BLOOM partners': 'tab-partners',
+                'HR and finance': 'tab-hrfinance',
+                'Bloom 404': 'tab-bloom404',
+                'Beauty ways': 'tab-beautyways'
+            };
+
+            const targetTabId = tabBtnMap[projectKey];
+            if (targetTabId) {
+                const tabTrigger = new bootstrap.Tab(document.getElementById(targetTabId));
+                tabTrigger.show();
+                setActiveProjectView(projectKey);
+            }
+        }
+
+        function initCharts() {
+            const progressCtx = document.getElementById('projectProgressChart').getContext('2d');
+            const statusCtx = document.getElementById('statusDistributionChart').getContext('2d');
+
+            progressChartInstance = new Chart(progressCtx, {
+                type: 'bar',
+                data: {
+                    labels: PROJECTS.map(p => p.title),
+                    datasets: [{
+                        label: 'Completion %',
+                        data: PROJECTS.map(p => getProjectProgress(p.key)),
+                        backgroundColor: PROJECTS.map(p => p.color),
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 0, max: 100, ticks: { callback: v => v + '%' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            statusChartInstance = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: getStatusChartData(),
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12 } }
+                    }
+                }
+            });
+        }
+
+        function getStatusChartData() {
+            const counts = {
+                'Not Started': tasks.filter(t => t.status === 'Not Started').length,
+                'In Progress': tasks.filter(t => t.status === 'In Progress').length,
+                'On Hold': tasks.filter(t => t.status === 'On Hold').length,
+                'Completed': tasks.filter(t => t.status === 'Completed').length
+            };
+
+            return {
+                labels: ['Not Started', 'In Progress', 'On Hold', 'Completed'],
+                datasets: [{
+                    data: [counts['Not Started'], counts['In Progress'], counts['On Hold'], counts['Completed']],
+                    backgroundColor: ['#94a3b8', '#2563eb', '#d97706', '#059669'],
+                    borderWidth: 0
+                }]
+            };
+        }
+
+        function updateCharts() {
+            if (!progressChartInstance || !statusChartInstance) return;
+
+            progressChartInstance.data.datasets[0].data = PROJECTS.map(p => getProjectProgress(p.key));
+            progressChartInstance.update();
+
+            statusChartInstance.data = getStatusChartData();
+            statusChartInstance.update();
+        }
+
+        function renderProjectView(projectKey) {
+            const projectObj = PROJECTS.find(p => p.key === projectKey) || PROJECTS[0];
+            
+            document.getElementById('currentProjectTitle').textContent = projectObj.title;
+            document.getElementById('emptyStateProjectName').textContent = projectObj.title;
+            
+            const projectTasks = tasks.filter(t => t.project === projectKey);
+            document.getElementById('currentProjectBadge').textContent = `${projectTasks.length} Tasks`;
+            document.getElementById('currentProjectProgressPct').textContent = `${getProjectProgress(projectKey)}%`;
+
+            handleTableFilter();
+        }
+
+        function handleTableFilter() {
+            if (activeProject === 'dashboard') return;
+
+            const searchQuery = (document.getElementById('taskSearchInput')?.value || '').toLowerCase();
+            const statusFilter = document.getElementById('filterStatus')?.value || 'ALL';
+
+            const filtered = tasks.filter(t => {
+                if (t.project !== activeProject) return false;
+                if (statusFilter !== 'ALL' && t.status !== statusFilter) return false;
+                if (searchQuery) {
+                    const descMatch = (t.description || '').toLowerCase().includes(searchQuery);
+                    const actionMatch = (t.nextAction || '').toLowerCase().includes(searchQuery);
+                    const idMatch = (t.id || '').toLowerCase().includes(searchQuery);
+                    if (!descMatch && !actionMatch && !idMatch) return false;
+                }
+                return true;
+            });
+
+            const tbody = document.getElementById('taskTableBody');
+            const emptyState = document.getElementById('tableEmptyState');
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('d-none');
+            } else {
+                emptyState.classList.add('d-none');
+                tbody.innerHTML = filtered.map(t => renderTaskRow(t)).join('');
+            }
+        }
+
+        function renderTaskRow(task) {
+            const statusClass = `badge-status-${task.status.toLowerCase().replace(/\s+/g, '')}`;
+            const pinIcon = task.isPinned ? 'fa-solid fa-thumbtack text-primary' : 'fa-regular fa-thumbtack text-muted opacity-50';
+
+            return `
+                <tr>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-link p-0 text-decoration-none" onclick="togglePin('${task.id}')" title="${task.isPinned ? 'Unpin Task' : 'Pin Task'}">
+                            <i class="${pinIcon} fs-6"></i>
+                        </button>
+                    </td>
+                    <td class="fw-bold small text-secondary">${task.id}</td>
+                    <td>
+                        <span class="fw-semibold text-body d-block" style="white-space: pre-line;">${escapeHtml(task.description)}</span>
+                    </td>
+                    <td>
+                        <span class="small text-primary fw-medium">${escapeHtml(task.nextAction || 'None specified')}</span>
+                    </td>
+                    <td>
+                        <span class="badge ${statusClass}">${task.status}</span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress progress-slim flex-grow-1">
+                                <div class="progress-bar bg-primary" style="width: ${task.progress}%"></div>
+                            </div>
+                            <span class="small fw-semibold text-body" style="width: 32px;">${task.progress}%</span>
+                        </div>
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-1">
+                            <button class="action-btn text-primary border-0 bg-transparent" onclick="openTaskModal('${task.id}')" title="Edit Task">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button class="action-btn text-danger border-0 bg-transparent" onclick="promptDeleteTask('${task.id}')" title="Delete Task">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function openTaskModal(taskId = null) {
+            const form = document.getElementById('taskForm');
+            form.reset();
+
+            if (taskId) {
+                const task = tasks.find(t => t.id === taskId);
+                if (task) {
+                    document.getElementById('modalTitleText').textContent = 'Edit Task ' + task.id;
+                    document.getElementById('taskIdInput').value = task.id;
+                    document.getElementById('taskProjectSelect').value = task.project;
+                    document.getElementById('taskNextActionInput').value = task.nextAction || '';
+                    document.getElementById('taskDescInput').value = task.description;
+                    document.getElementById('taskStatusSelect').value = task.status;
+                    document.getElementById('taskProgressRange').value = task.progress || 0;
+                    document.getElementById('taskProgressVal').textContent = task.progress || 0;
+                    document.getElementById('taskPinnedCheck').checked = !!task.isPinned;
+                }
+            } else {
+                document.getElementById('modalTitleText').textContent = 'Add New Task';
+                document.getElementById('taskIdInput').value = '';
+                if (activeProject !== 'dashboard') {
+                    document.getElementById('taskProjectSelect').value = activeProject;
+                }
+                document.getElementById('taskProgressRange').value = 0;
+                document.getElementById('taskProgressVal').textContent = '0';
+                document.getElementById('taskPinnedCheck').checked = false;
+            }
+
+            taskBootstrapModal.show();
+        }
+
+        function openTaskModalForCurrentProject() {
+            openTaskModal(null);
+        }
+
+        function togglePin(taskId) {
+            tasks = tasks.map(t => {
+                if (t.id === taskId) {
+                    const nextState = !t.isPinned;
+                    if (nextState) {
+                        tasks.forEach(ot => ot.isPinned = false);
+                    }
+                    return { ...t, isPinned: nextState };
+                } else {
+                    return { ...t, isPinned: false };
+                }
+            });
+
+            saveStorageData();
+            showToast('Current task focus updated.');
+            if (activeProject === 'dashboard') {
+                renderDashboard();
+            } else {
+                renderProjectView(activeProject);
+            }
+        }
+
+        function promptSelectPinTask() {
+            const listGroup = document.getElementById('pinTaskListGroup');
+            if (tasks.length === 0) {
+                listGroup.innerHTML = '<div class="p-4 text-center text-secondary small">No tasks created yet. Create a task first!</div>';
+            } else {
+                listGroup.innerHTML = tasks.map(t => `
+                    <button class="list-group-item list-group-item-action p-3 border-bottom border-secondary-subtle" onclick="selectAndPinTask('${t.id}')">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="badge bg-body-tertiary text-secondary border">${t.project}</span>
+                            <span class="small text-muted">${t.id}</span>
+                        </div>
+                        <div class="fw-bold text-body mb-1" style="white-space: pre-line;">${escapeHtml(t.description)}</div>
+                        ${t.nextAction ? `<div class="small text-primary"><i class="fa-solid fa-angles-right me-1"></i> ${escapeHtml(t.nextAction)}</div>` : ''}
+                    </button>
+                `).join('');
+            }
+            selectPinModal.show();
+        }
+
+        function selectAndPinTask(taskId) {
+            tasks.forEach(t => t.isPinned = (t.id === taskId));
+            saveStorageData();
+            selectPinModal.hide();
+            showToast('Task pinned to Hero Banner.');
+            renderDashboard();
+        }
+
+        function syncProgressWithStatus() {
+            const status = document.getElementById('taskStatusSelect').value;
+            const range = document.getElementById('taskProgressRange');
+            if (status === 'Completed') {
+                range.value = 100;
+            } else if (status === 'Not Started') {
+                range.value = 0;
+            } else if (status === 'In Progress' && range.value == 0) {
+                range.value = 25;
+            }
+            document.getElementById('taskProgressVal').textContent = range.value;
+        }
+
+        function updateProgressLabel(val) {
+            document.getElementById('taskProgressVal').textContent = val;
+            const statusSelect = document.getElementById('taskStatusSelect');
+            if (parseInt(val) === 100) {
+                statusSelect.value = 'Completed';
+            } else if (parseInt(val) === 0 && statusSelect.value === 'Completed') {
+                statusSelect.value = 'Not Started';
+            } else if (parseInt(val) > 0 && statusSelect.value === 'Not Started') {
+                statusSelect.value = 'In Progress';
+            }
+        }
+
+        function handleTaskFormSubmit(e) {
+            e.preventDefault();
+
+            const id = document.getElementById('taskIdInput').value;
+            const project = document.getElementById('taskProjectSelect').value;
+            const nextAction = document.getElementById('taskNextActionInput').value.trim();
+            const description = document.getElementById('taskDescInput').value.trim();
+            const status = document.getElementById('taskStatusSelect').value;
+            const progress = parseInt(document.getElementById('taskProgressRange').value) || 0;
+            const isPinned = document.getElementById('taskPinnedCheck').checked;
+
+            if (isPinned) {
+                tasks.forEach(t => t.isPinned = false);
+            }
+
+            if (id) {
+                const index = tasks.findIndex(t => t.id === id);
+                if (index !== -1) {
+                    tasks[index] = { ...tasks[index], project, nextAction, description, status, progress, isPinned, updatedAt: new Date().toISOString() };
+                    showToast(`Task ${id} updated.`);
+                }
+            } else {
+                const newNum = tasks.length > 0 ? Math.max(...tasks.map(t => parseInt(t.id.replace(/\D/g, '')) || 1000)) + 1 : 1001;
+                const newId = `TSK-${newNum}`;
+                
+                tasks.push({
+                    id: newId,
+                    project,
+                    nextAction,
+                    description,
+                    status,
+                    progress,
+                    isPinned,
+                    createdAt: new Date().toISOString()
+                });
+                showToast(`New task ${newId} created.`);
+            }
+
+            saveStorageData();
+            taskBootstrapModal.hide();
+
+            if (activeProject === 'dashboard') {
+                renderDashboard();
+                updateCharts();
+            } else {
+                renderProjectView(activeProject);
+                updateKPIs();
+            }
+        }
+
+        function promptDeleteTask(taskId) {
+            pendingDeleteId = taskId;
+            document.getElementById('deleteTaskId').textContent = taskId;
+            deleteBootstrapModal.show();
+        }
+
+        function executeDeleteTask() {
+            if (!pendingDeleteId) return;
+            tasks = tasks.filter(t => t.id !== pendingDeleteId);
+            saveStorageData();
+            deleteBootstrapModal.hide();
+            showToast(`Task ${pendingDeleteId} deleted.`);
+            pendingDeleteId = null;
+
+            if (activeProject === 'dashboard') {
+                renderDashboard();
+                updateCharts();
+            } else {
+                renderProjectView(activeProject);
+                updateKPIs();
+            }
+        }
+
+        function confirmResetAll() {
+            resetBootstrapModal.show();
+        }
+
+        function executeResetAll() {
+            tasks = [];
+            standaloneCtaText = DEFAULT_CTA_TEXT;
+            saveStorageData();
+            resetBootstrapModal.hide();
+            showToast('All program data reset.');
+
+            if (activeProject === 'dashboard') {
+                renderDashboard();
+                updateCharts();
+            } else {
+                renderProjectView(activeProject);
+                updateKPIs();
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('taskSearchInput').value = '';
+            document.getElementById('filterStatus').value = 'ALL';
+            handleTableFilter();
+        }
+
+        function exportData() {
+            const backupPayload = {
+                tasks: tasks,
+                standaloneCtaText: standaloneCtaText,
+                exportedAt: new Date().toISOString()
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupPayload, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `CRM_Rollout_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('Backup JSON exported.');
+        }
+
+        function triggerImport() {
+            document.getElementById('importFileInput').click();
+        }
+
+        function importData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const imported = JSON.parse(evt.target.result);
+                    if (Array.isArray(imported)) {
+                        tasks = imported;
+                    } else if (imported && Array.isArray(imported.tasks)) {
+                        tasks = imported.tasks;
+                        if (imported.standaloneCtaText) {
+                            standaloneCtaText = imported.standaloneCtaText;
+                        }
+                    }
+                    saveStorageData();
+                    showToast('Data imported successfully.');
+                    renderDashboard();
+                    updateCharts();
+                } catch (err) {
+                    showToast('Failed to parse backup file.', 'danger');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function showToast(msg) {
+            document.getElementById('toastMessage').innerHTML = `<i class="fa-solid fa-circle-check text-success me-2"></i> ${escapeHtml(msg)}`;
+            liveToast.show();
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('crm_theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('crm_theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeIcon');
+            if (theme === 'dark') {
+                icon.className = 'fa-solid fa-sun';
+            } else {
+                icon.className = 'fa-solid fa-moon';
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
