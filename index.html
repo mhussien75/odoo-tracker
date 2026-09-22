@@ -348,7 +348,7 @@
                                     <h5 class="fw-bold mb-0 text-body"><i class="fa-solid fa-chart-bar me-2 text-primary"></i>Workstream Progress</h5>
                                     <span class="badge bg-body-tertiary text-secondary border">6 Workstreams</span>
                                 </div>
-                                <div style="position: relative; height:240px;">
+                                <div style="position: relative; height:240px; width:100%;">
                                     <canvas id="projectProgressChart"></canvas>
                                 </div>
                             </div>
@@ -359,7 +359,7 @@
                                     <h5 class="fw-bold mb-0 text-body"><i class="fa-solid fa-chart-pie me-2 text-info"></i>Status Breakdown</h5>
                                     <span class="badge bg-body-tertiary text-secondary border" id="totalTasksBadge">0 Tasks</span>
                                 </div>
-                                <div style="position: relative; height:240px;" class="d-flex justify-content-center align-items-center">
+                                <div style="position: relative; height:240px; width:100%;" class="d-flex justify-content-center align-items-center">
                                     <canvas id="statusDistributionChart"></canvas>
                                 </div>
                             </div>
@@ -699,7 +699,7 @@
             }
 
             renderDashboard();
-            setTimeout(() => initCharts(), 200);
+            setTimeout(() => initCharts(), 300);
 
             setInterval(pollCloudUpdates, 10000);
         }
@@ -775,7 +775,7 @@
             activeProject = projectKey;
             if (projectKey === 'dashboard') {
                 renderDashboard();
-                setTimeout(() => updateCharts(), 100);
+                setTimeout(() => updateCharts(), 200);
             } else {
                 renderProjectView(projectKey);
             }
@@ -1311,7 +1311,7 @@
                     saveCloudData();
                     showToast('Import successful.');
                     renderDashboard();
-                    setTimeout(() => updateCharts(), 100);
+                    setTimeout(() => updateCharts(), 200);
                 } catch (err) { showToast('Invalid JSON file.', 'danger'); }
             };
             reader.readAsText(file);
