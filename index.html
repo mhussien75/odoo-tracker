@@ -149,7 +149,7 @@
         }
 
         .hero-split-card {
-            min-height: 240px;
+            min-height: 280px;
         }
 
         .micro-text {
@@ -699,7 +699,7 @@
             }
 
             renderDashboard();
-            initCharts();
+            setTimeout(() => initCharts(), 200);
 
             setInterval(pollCloudUpdates, 10000);
         }
@@ -775,7 +775,7 @@
             activeProject = projectKey;
             if (projectKey === 'dashboard') {
                 renderDashboard();
-                updateCharts();
+                setTimeout(() => updateCharts(), 100);
             } else {
                 renderProjectView(projectKey);
             }
@@ -815,7 +815,7 @@
                 `;
             } else {
                 leftCard.innerHTML = `
-                    <div class="d-flex flex-column gap-3 h-100 justify-content-between">
+                    <div class="d-flex flex-column justify-content-between h-100">
                         <div>
                             <div class="d-flex align-items-center justify-content-between mb-2">
                                 <div class="d-flex align-items-center gap-2 text-primary fw-bold">
@@ -829,13 +829,13 @@
                                     const statusClass = `badge-status-${pt.status.toLowerCase().replace(/\s+/g, '')}`;
                                     return `
                                         <div class="col-12 ${pinnedTasks.length > 1 ? 'col-md-6' : ''}">
-                                            <div class="p-2.5 rounded border bg-body-tertiary h-100 d-flex flex-column justify-content-between">
+                                            <div class="p-3 rounded border bg-body-tertiary h-100 d-flex flex-column justify-content-between">
                                                 <div>
-                                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                                    <div class="d-flex align-items-center justify-content-between mb-2">
                                                         <span class="badge bg-body text-secondary border small">${pt.project}</span>
                                                         <span class="badge ${statusClass} small">${pt.status}</span>
                                                     </div>
-                                                    <div class="fw-bold text-body small mb-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${escapeHtml(pt.description)}</div>
+                                                    <div class="fw-bold text-body small mb-2" style="line-height: 1.4;">${escapeHtml(pt.description)}</div>
                                                 </div>
                                                 <div class="d-flex align-items-center justify-content-between pt-2 border-top border-secondary-subtle">
                                                     <span class="micro-text fw-bold text-primary">${pt.progress}% Complete</span>
@@ -858,7 +858,7 @@
                             <span class="text-uppercase micro-text fw-bold text-warning"><i class="fa-solid fa-bullhorn me-1"></i> Program Call To Action Directives</span>
                             <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">${ctaList.length} Active</span>
                         </div>
-                        <div class="d-flex flex-column gap-2 my-2 overflow-auto" style="max-height: 130px;">
+                        <div class="d-flex flex-column gap-2 my-2 overflow-auto" style="max-height: 140px;">
                             ${ctaList.map((cta, index) => `
                                 <div class="p-2 rounded-3 bg-white bg-opacity-75 border border-warning-subtle shadow-sm d-flex justify-content-between align-items-center">
                                     <p class="small fw-bold text-body mb-0 pe-2" style="color: #0f172a; white-space: pre-line;">"${escapeHtml(cta)}"</p>
@@ -1030,7 +1030,14 @@
         }
 
         function initCharts() {
-            progressChartInstance = new Chart(document.getElementById('projectProgressChart').getContext('2d'), {
+            const progCanvas = document.getElementById('projectProgressChart');
+            const statCanvas = document.getElementById('statusDistributionChart');
+            if (!progCanvas || !statCanvas) return;
+
+            if (progressChartInstance) progressChartInstance.destroy();
+            if (statusChartInstance) statusChartInstance.destroy();
+
+            progressChartInstance = new Chart(progCanvas.getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: PROJECTS.map(p => p.title),
@@ -1039,7 +1046,7 @@
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
             });
 
-            statusChartInstance = new Chart(document.getElementById('statusDistributionChart').getContext('2d'), {
+            statusChartInstance = new Chart(statCanvas.getContext('2d'), {
                 type: 'doughnut',
                 data: getStatusChartData(),
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
@@ -1060,7 +1067,10 @@
         }
 
         function updateCharts() {
-            if (!progressChartInstance || !statusChartInstance) return;
+            if (!progressChartInstance || !statusChartInstance) {
+                initCharts();
+                return;
+            }
             progressChartInstance.data.datasets[0].data = PROJECTS.map(p => getProjectProgress(p.key));
             progressChartInstance.update();
             statusChartInstance.data = getStatusChartData();
@@ -1301,7 +1311,7 @@
                     saveCloudData();
                     showToast('Import successful.');
                     renderDashboard();
-                    updateCharts();
+                    setTimeout(() => updateCharts(), 100);
                 } catch (err) { showToast('Invalid JSON file.', 'danger'); }
             };
             reader.readAsText(file);
