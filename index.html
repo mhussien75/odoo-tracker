@@ -189,6 +189,14 @@
             justify-content: center;
             transition: opacity 0.3s ease;
         }
+
+        /* Ensures canvases always have a stable box even before Chart.js paints,
+           which prevents 0x0 measurement races on first render / tab switches. */
+        .chart-wrap {
+            position: relative;
+            width: 100%;
+            height: 240px;
+        }
     </style>
 </head>
 <body>
@@ -348,7 +356,7 @@
                                     <h5 class="fw-bold mb-0 text-body"><i class="fa-solid fa-chart-bar me-2 text-primary"></i>Workstream Progress</h5>
                                     <span class="badge bg-body-tertiary text-secondary border">6 Workstreams</span>
                                 </div>
-                                <div style="position: relative; height:240px; width:100%;">
+                                <div class="chart-wrap">
                                     <canvas id="projectProgressChart"></canvas>
                                 </div>
                             </div>
@@ -359,7 +367,7 @@
                                     <h5 class="fw-bold mb-0 text-body"><i class="fa-solid fa-chart-pie me-2 text-info"></i>Status Breakdown</h5>
                                     <span class="badge bg-body-tertiary text-secondary border" id="totalTasksBadge">0 Tasks</span>
                                 </div>
-                                <div style="position: relative; height:240px; width:100%;" class="d-flex justify-content-center align-items-center">
+                                <div class="chart-wrap d-flex justify-content-center align-items-center">
                                     <canvas id="statusDistributionChart"></canvas>
                                 </div>
                             </div>
@@ -656,6 +664,21 @@
 
             initTheme();
 
+            // Re-render / resize charts whenever the Dashboard tab is actually
+            // shown (canvas has real layout dimensions only after this fires).
+            const dashboardTabBtn = document.getElementById('tab-dashboard');
+            if (dashboardTabBtn) {
+                dashboardTabBtn.addEventListener('shown.bs.tab', () => {
+                    renderDashboard();
+                    initOrResizeCharts();
+                });
+            }
+
+            // Keep charts crisp on viewport/container resizes.
+            window.addEventListener('resize', debounce(() => {
+                if (activeProject === 'dashboard') initOrResizeCharts();
+            }, 150));
+
             if (sessionStorage.getItem('crm_authenticated') === 'true') {
                 unlockApp();
             }
@@ -699,7 +722,7 @@
             }
 
             renderDashboard();
-            setTimeout(() => initCharts(), 300);
+            initOrResizeCharts();
 
             setInterval(pollCloudUpdates, 10000);
         }
@@ -767,7 +790,8 @@
         function updateKPIs() {
             document.getElementById('ceoCommentDisplay').textContent = ceoComment;
             document.getElementById('kpiOverallProgress').textContent = `${calculateOverallProgress()}%`;
-            document.getElementById('kpiActiveTasks').textContent = tasks.filter(t => t.status !== 'Completed').length;
+            const kpiActiveTasksEl = document.getElementById('kpiActiveTasks');
+            if (kpiActiveTasksEl) kpiActiveTasksEl.textContent = tasks.filter(t => t.status !== 'Completed').length;
             document.getElementById('totalTasksBadge').textContent = `${tasks.length} Tasks Total`;
         }
 
@@ -775,7 +799,7 @@
             activeProject = projectKey;
             if (projectKey === 'dashboard') {
                 renderDashboard();
-                setTimeout(() => updateCharts(), 200);
+                initOrResizeCharts();
             } else {
                 renderProjectView(projectKey);
             }
@@ -1029,6 +1053,50 @@
             }
         }
 
+        // --- Chart lifecycle helpers -------------------------------------------------
+        // Chart.js measures the canvas's *rendered* size (via its parent's
+        // getBoundingClientRect) the instant `new Chart(...)` runs. If that happens
+        // before the browser has painted a layout pass for the canvas — e.g. right
+        // after the auth overlay is hidden, right after a Bootstrap tab-pane becomes
+        // visible, or on the very first page paint — the measured size can be 0x0,
+        // which produces a blank/invisible chart that never recovers on its own.
+        //
+        // `waitForVisibleCanvas` polls with requestAnimationFrame until the canvas
+        // actually has a non-zero layout box (or gives up after a timeout), and
+        // `initOrResizeCharts` is the single entry point everything below calls:
+        // it (re)builds the charts if they don't exist yet, or just calls
+        // `chart.resize()` + refreshes the data if they do — so switching tabs or
+        // resizing the window never leaves a stale/blank canvas behind.
+
+        function waitForVisibleCanvas(canvas, callback, attemptsLeft = 60) {
+            if (!canvas) return;
+            const rect = canvas.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                callback();
+                return;
+            }
+            if (attemptsLeft <= 0) {
+                // Give up waiting and try anyway; better than staying blank forever.
+                callback();
+                return;
+            }
+            requestAnimationFrame(() => waitForVisibleCanvas(canvas, callback, attemptsLeft - 1));
+        }
+
+        function initOrResizeCharts() {
+            const progCanvas = document.getElementById('projectProgressChart');
+            const statCanvas = document.getElementById('statusDistributionChart');
+            if (!progCanvas || !statCanvas) return;
+
+            waitForVisibleCanvas(progCanvas, () => {
+                if (progressChartInstance && statusChartInstance) {
+                    updateCharts();
+                } else {
+                    initCharts();
+                }
+            });
+        }
+
         function initCharts() {
             const progCanvas = document.getElementById('projectProgressChart');
             const statCanvas = document.getElementById('statusDistributionChart');
@@ -1068,14 +1136,25 @@
 
         function updateCharts() {
             if (!progressChartInstance || !statusChartInstance) {
-                initCharts();
+                initOrResizeCharts();
                 return;
             }
             progressChartInstance.data.datasets[0].data = PROJECTS.map(p => getProjectProgress(p.key));
+            progressChartInstance.resize();
             progressChartInstance.update();
             statusChartInstance.data = getStatusChartData();
+            statusChartInstance.resize();
             statusChartInstance.update();
         }
+
+        function debounce(fn, wait) {
+            let t;
+            return (...args) => {
+                clearTimeout(t);
+                t = setTimeout(() => fn(...args), wait);
+            };
+        }
+        // -------------------------------------------------------------------------------
 
         function renderProjectView(projectKey) {
             const projectObj = PROJECTS.find(p => p.key === projectKey) || PROJECTS[0];
@@ -1311,7 +1390,7 @@
                     saveCloudData();
                     showToast('Import successful.');
                     renderDashboard();
-                    setTimeout(() => updateCharts(), 200);
+                    initOrResizeCharts();
                 } catch (err) { showToast('Invalid JSON file.', 'danger'); }
             };
             reader.readAsText(file);
@@ -1334,6 +1413,7 @@
             document.documentElement.setAttribute('data-bs-theme', next);
             localStorage.setItem('crm_theme', next);
             updateThemeIcon(next);
+            if (activeProject === 'dashboard') initOrResizeCharts();
         }
 
         function updateThemeIcon(theme) {
