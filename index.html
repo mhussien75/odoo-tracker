@@ -335,7 +335,7 @@
                                     <h3 class="display-6 fw-extrabold mb-0 text-body" id="kpiOverallProgress">0%</h3>
                                     <i class="fa-solid fa-chart-line text-success fs-4 opacity-75"></i>
                                 </div>
-                                <span class="text-secondary micro-text">Weighted Avg Across 6 Projects</span>
+                                <span class="text-secondary micro-text">Cumulative Ratio (251 / 600 Tasks)</span>
                             </div>
                         </div>
 
@@ -624,7 +624,7 @@
     <script>
         // PUBLIC SHARED JSONBIN CONFIGURATION
         const BIN_ID = '6ab23850ac6210605ae897ff'; 
-        const API_KEY = '$2a$10$AEh.xH3TcEreYwAoCzjK.ehm62aoYfWf0GbbcIhNtf9vjdUhk95j2'; // Public Master Key placeholder
+        const API_KEY = '$2a$10$AEh.xH3TcEreYwAoCzjK.ehm62aoYfWf0GbbcIhNtf9vjdUhk95j2';
 
         const HARD_DEADLINE = new Date('2026-12-31T23:59:59');
         const DEFAULT_CTA_TEXT = "Ensure all cross-functional leads finalize security compliance sign-offs and execute end-to-end integration testing before the Q4 cutoff date.";
@@ -657,7 +657,6 @@
 
             initTheme();
 
-            // Check if user already authenticated in this session
             if (sessionStorage.getItem('crm_authenticated') === 'true') {
                 unlockApp();
             }
@@ -702,7 +701,6 @@
             renderDashboard();
             initCharts();
 
-            // Poll cloud every 10 seconds for live multi-user sync
             setInterval(pollCloudUpdates, 10000);
         }
 
@@ -751,10 +749,11 @@
             return diffDays > 0 ? diffDays : 0;
         }
 
+        // Updated Overall Progress calculation based on total completed tasks out of 600
         function calculateOverallProgress() {
-            if (tasks.length === 0) return 0;
-            const sum = tasks.reduce((acc, task) => acc + (parseInt(task.progress) || 0), 0);
-            return Math.round(sum / tasks.length);
+            const completedCount = tasks.filter(t => t.status === 'Completed' || t.progress === 100).length;
+            const totalTasks = 600;
+            return Number(((completedCount / totalTasks) * 100).toFixed(1));
         }
 
         function getProjectProgress(projectKey) {
