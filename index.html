@@ -815,35 +815,37 @@
                 `;
             } else {
                 leftCard.innerHTML = `
-                    <div class="d-flex flex-column gap-3">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center gap-2 text-primary fw-bold">
-                                <i class="fa-solid fa-thumbtack fs-5"></i>
-                                <span class="text-uppercase micro-text tracking-wider">Current Tasks in Focus (${pinnedTasks.length} / 2)</span>
+                    <div class="d-flex flex-column gap-3 h-100 justify-content-between">
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2 text-primary fw-bold">
+                                    <i class="fa-solid fa-thumbtack fs-5"></i>
+                                    <span class="text-uppercase micro-text tracking-wider">Current Tasks in Focus (${pinnedTasks.length} / 2)</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary rounded-3 py-0 px-2" onclick="promptSelectPinTask()"><i class="fa-solid fa-arrow-rotate-right me-1"></i> Manage Pins</button>
                             </div>
-                            <button class="btn btn-sm btn-outline-primary rounded-3 py-0 px-2" onclick="promptSelectPinTask()"><i class="fa-solid fa-arrow-rotate-right me-1"></i> Manage Pins</button>
-                        </div>
-                        <div class="row g-2">
-                            ${pinnedTasks.map(pt => {
-                                const statusClass = `badge-status-${pt.status.toLowerCase().replace(/\s+/g, '')}`;
-                                return `
-                                    <div class="col-12 ${pinnedTasks.length > 1 ? 'col-md-6' : ''}">
-                                        <div class="p-2.5 rounded border bg-body-tertiary h-100 d-flex flex-column justify-content-between">
-                                            <div>
-                                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                                    <span class="badge bg-body text-secondary border small">${pt.project}</span>
-                                                    <span class="badge ${statusClass} small">${pt.status}</span>
+                            <div class="row g-2">
+                                ${pinnedTasks.map(pt => {
+                                    const statusClass = `badge-status-${pt.status.toLowerCase().replace(/\s+/g, '')}`;
+                                    return `
+                                        <div class="col-12 ${pinnedTasks.length > 1 ? 'col-md-6' : ''}">
+                                            <div class="p-2.5 rounded border bg-body-tertiary h-100 d-flex flex-column justify-content-between">
+                                                <div>
+                                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                                        <span class="badge bg-body text-secondary border small">${pt.project}</span>
+                                                        <span class="badge ${statusClass} small">${pt.status}</span>
+                                                    </div>
+                                                    <div class="fw-bold text-body small mb-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${escapeHtml(pt.description)}</div>
                                                 </div>
-                                                <div class="fw-bold text-body small mb-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${escapeHtml(pt.description)}</div>
-                                            </div>
-                                            <div class="d-flex align-items-center justify-content-between pt-2 border-top border-secondary-subtle">
-                                                <span class="micro-text fw-bold text-primary">${pt.progress}% Complete</span>
-                                                <button class="btn btn-link btn-sm text-danger p-0 text-decoration-none small" onclick="togglePin('${pt.id}')">Unpin</button>
+                                                <div class="d-flex align-items-center justify-content-between pt-2 border-top border-secondary-subtle">
+                                                    <span class="micro-text fw-bold text-primary">${pt.progress}% Complete</span>
+                                                    <button class="btn btn-link btn-sm text-danger p-0 text-decoration-none small" onclick="togglePin('${pt.id}')">Unpin</button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                `;
-                            }).join('')}
+                                    `;
+                                }).join('')}
+                            </div>
                         </div>
                     </div>
                 `;
