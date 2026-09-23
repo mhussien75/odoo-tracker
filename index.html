@@ -190,8 +190,6 @@
             transition: opacity 0.3s ease;
         }
 
-        /* Ensures canvases always have a stable box even before Chart.js paints,
-           which prevents 0x0 measurement races on first render / tab switches. */
         .chart-wrap {
             position: relative;
             width: 100%;
@@ -387,6 +385,7 @@
                                         <th style="width: 140px;">Total Tasks</th>
                                         <th style="width: 140px;">Completed</th>
                                         <th>Overall Progress</th>
+                                        <th style="width: 170px;">100% Target Date</th>
                                         <th style="width: 140px;" class="text-end">Status</th>
                                     </tr>
                                 </thead>
@@ -582,6 +581,29 @@
         </div>
     </div>
 
+    <!-- MODAL: EDIT PROJECT TARGET DATE -->
+    <div class="modal fade" id="targetDateModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card border-primary-subtle">
+                <div class="modal-header border-bottom border-secondary-subtle">
+                    <h5 class="modal-title fw-bold text-body"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Set 100% Target Date</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="targetDateProjectKey">
+                    <div class="mb-3">
+                        <label for="projectTargetDateInput" class="form-label fw-bold small">Expected Date for 100% Completion (<span id="targetDateProjectTitleLabel">Project</span>)</label>
+                        <input type="date" class="form-control border-secondary-subtle" id="projectTargetDateInput">
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary-subtle">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary px-4 fw-semibold" onclick="saveProjectTargetDate()">Save Target Date</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="selectPinModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content glass-card border-secondary-subtle">
@@ -647,10 +669,11 @@
         let tasks = [];
         let ctaList = [...DEFAULT_CTA_LIST];
         let ceoComment = "No comment recorded yet.";
+        let projectTargetDates = {}; // stores target date strings mapped by project key
         let activeProject = 'dashboard';
         let pendingDeleteId = null;
 
-        let taskBootstrapModal, ctaBootstrapModal, ceoCommentBootstrapModal, selectPinModal, deleteBootstrapModal, liveToast;
+        let taskBootstrapModal, ctaBootstrapModal, ceoCommentBootstrapModal, targetDateModal, selectPinModal, deleteBootstrapModal, liveToast;
         let progressChartInstance = null;
         let statusChartInstance = null;
 
@@ -658,14 +681,13 @@
             taskBootstrapModal = new bootstrap.Modal(document.getElementById('taskModal'));
             ctaBootstrapModal = new bootstrap.Modal(document.getElementById('ctaModal'));
             ceoCommentBootstrapModal = new bootstrap.Modal(document.getElementById('ceoCommentModal'));
+            targetDateModal = new bootstrap.Modal(document.getElementById('targetDateModal'));
             selectPinModal = new bootstrap.Modal(document.getElementById('selectPinModal'));
             deleteBootstrapModal = new bootstrap.Modal(document.getElementById('deleteModal'));
             liveToast = new bootstrap.Toast(document.getElementById('liveToast'));
 
             initTheme();
 
-            // Re-render / resize charts whenever the Dashboard tab is actually
-            // shown (canvas has real layout dimensions only after this fires).
             const dashboardTabBtn = document.getElementById('tab-dashboard');
             if (dashboardTabBtn) {
                 dashboardTabBtn.addEventListener('shown.bs.tab', () => {
@@ -674,7 +696,6 @@
                 });
             }
 
-            // Keep charts crisp on viewport/container resizes.
             window.addEventListener('resize', debounce(() => {
                 if (activeProject === 'dashboard') initOrResizeCharts();
             }, 150));
@@ -715,6 +736,7 @@
                         tasks = data.record.tasks || [];
                         ctaList = data.record.ctaList || (data.record.standaloneCtaText ? [data.record.standaloneCtaText] : [...DEFAULT_CTA_LIST]);
                         ceoComment = data.record.ceoComment || "No comment recorded yet.";
+                        projectTargetDates = data.record.projectTargetDates || {};
                     }
                 }
             } catch (err) {
@@ -734,10 +756,11 @@
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.record && (JSON.stringify(data.record.tasks) !== JSON.stringify(tasks) || JSON.stringify(data.record.ctaList) !== JSON.stringify(ctaList) || data.record.ceoComment !== ceoComment)) {
+                    if (data.record && (JSON.stringify(data.record.tasks) !== JSON.stringify(tasks) || JSON.stringify(data.record.ctaList) !== JSON.stringify(ctaList) || data.record.ceoComment !== ceoComment || JSON.stringify(data.record.projectTargetDates) !== JSON.stringify(projectTargetDates))) {
                         tasks = data.record.tasks || [];
                         ctaList = data.record.ctaList || (data.record.standaloneCtaText ? [data.record.standaloneCtaText] : [...DEFAULT_CTA_LIST]);
                         ceoComment = data.record.ceoComment || "No comment recorded yet.";
+                        projectTargetDates = data.record.projectTargetDates || {};
                         if (activeProject === 'dashboard') {
                             renderDashboard();
                             updateCharts();
@@ -751,7 +774,7 @@
         }
 
         async function saveCloudData() {
-            const payload = { tasks, ctaList, ceoComment };
+            const payload = { tasks, ctaList, ceoComment, projectTargetDates };
             try {
                 await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
                     method: 'PUT',
@@ -763,6 +786,31 @@
                 });
             } catch (err) {
                 console.error("Failed to sync to cloud", err);
+            }
+        }
+
+        function openTargetDateModal(projectKey) {
+            const projectObj = PROJECTS.find(p => p.key === projectKey);
+            if (!projectObj) return;
+            document.getElementById('targetDateProjectKey').value = projectKey;
+            document.getElementById('targetDateProjectTitleLabel').textContent = projectObj.title;
+            document.getElementById('projectTargetDateInput').value = projectTargetDates[projectKey] || '';
+            targetDateModal.show();
+        }
+
+        function saveProjectTargetDate() {
+            const projectKey = document.getElementById('targetDateProjectKey').value;
+            const dateVal = document.getElementById('projectTargetDateInput').value;
+            if (projectKey) {
+                if (dateVal) {
+                    projectTargetDates[projectKey] = dateVal;
+                } else {
+                    delete projectTargetDates[projectKey];
+                }
+                saveCloudData();
+                targetDateModal.hide();
+                showToast('Target completion date updated!');
+                renderDashboard();
             }
         }
 
@@ -970,13 +1018,14 @@
                 const count = projTasks.length;
                 const completedCount = projTasks.filter(t => t.status === 'Completed').length;
                 const pct = getProjectProgress(proj.key);
+                const targetDate = projectTargetDates[proj.key] || '';
                 let statusBadge = '<span class="badge badge-status-notstarted">Not Started</span>';
                 if (pct === 100 && count > 0) statusBadge = '<span class="badge badge-status-completed">Completed</span>';
                 else if (pct > 0) statusBadge = '<span class="badge badge-status-inprogress">In Progress</span>';
 
                 return `
-                    <tr style="cursor: pointer;" onclick="switchToProjectTab('${proj.key}')">
-                        <td>
+                    <tr>
+                        <td onclick="switchToProjectTab('${proj.key}')" style="cursor: pointer;">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="rounded-2 p-1.5 d-flex align-items-center justify-content-center" style="background: ${proj.color}20; color: ${proj.color}; width: 32px; height: 32px;">
                                     <i class="fa-solid ${proj.icon} small"></i>
@@ -984,9 +1033,9 @@
                                 <span class="fw-bold text-body">${proj.title}</span>
                             </div>
                         </td>
-                        <td class="fw-semibold text-body">${count} Tasks</td>
-                        <td class="text-secondary">${completedCount} Tasks</td>
-                        <td>
+                        <td class="fw-semibold text-body" onclick="switchToProjectTab('${proj.key}')" style="cursor: pointer;">${count} Tasks</td>
+                        <td class="text-secondary" onclick="switchToProjectTab('${proj.key}')" style="cursor: pointer;">${completedCount} Tasks</td>
+                        <td onclick="switchToProjectTab('${proj.key}')" style="cursor: pointer;">
                             <div class="d-flex align-items-center gap-2" style="max-width: 220px;">
                                 <div class="progress progress-slim flex-grow-1">
                                     <div class="progress-bar" style="width: ${pct}%; background-color: ${proj.color};"></div>
@@ -994,7 +1043,13 @@
                                 <span class="small fw-bold" style="width: 36px;">${pct}%</span>
                             </div>
                         </td>
-                        <td class="text-end">${statusBadge}</td>
+                        <td>
+                            <div class="d-flex align-items-center justify-content-between gap-1">
+                                <span class="small ${targetDate ? 'text-body fw-semibold' : 'text-muted'}">${targetDate || 'Not set'}</span>
+                                <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="openTargetDateModal('${proj.key}')" title="Set 100% Target Date"><i class="fa-solid fa-calendar-days"></i></button>
+                            </div>
+                        </td>
+                        <td class="text-end" onclick="switchToProjectTab('${proj.key}')" style="cursor: pointer;">${statusBadge}</td>
                     </tr>
                 `;
             }).join('');
@@ -1007,11 +1062,12 @@
                 const count = projTasks.length;
                 const completedCount = projTasks.filter(t => t.status === 'Completed').length;
                 const pct = getProjectProgress(proj.key);
+                const targetDate = projectTargetDates[proj.key] || '';
 
                 return `
                     <div class="col-12 col-md-6 col-lg-4">
-                        <div class="glass-card p-4 project-card h-100 d-flex flex-column justify-content-between" onclick="switchToProjectTab('${proj.key}')">
-                            <div>
+                        <div class="glass-card p-4 project-card h-100 d-flex flex-column justify-content-between">
+                            <div onclick="switchToProjectTab('${proj.key}')">
                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="rounded-3 p-2 d-flex align-items-center justify-content-center" style="background: ${proj.color}20; color: ${proj.color}; width: 38px; height: 38px;">
@@ -1030,15 +1086,21 @@
                                         <div class="progress-bar" style="width: ${pct}%; background-color: ${proj.color};"></div>
                                     </div>
                                 </div>
+                                <div class="d-flex align-items-center justify-content-between small text-secondary mb-2">
+                                    <span>100% Target Date:</span>
+                                    <span class="fw-semibold text-body">${targetDate || 'Not set'}</span>
+                                </div>
                             </div>
-                            <div class="d-flex align-items-center justify-content-between pt-2 border-top border-secondary-subtle">
-                                <span class="micro-text text-secondary">${completedCount} of ${count} Completed</span>
-                                <span class="small text-primary fw-semibold">Manage <i class="fa-solid fa-arrow-right ms-1"></i></span>
+                          <div class="d-flex align-items-center justify-content-between pt-2 border-top border-secondary-subtle">
+                              <span class="micro-text text-secondary" onclick="switchToProjectTab('${proj.key}')" style="cursor: pointer;">${completedCount} of ${count} Completed</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="openTargetDateModal('${proj.key}')" title="Set 100% Target Date"><i class="fa-solid fa-calendar-days"></i></button>
+                                <span class="small text-primary fw-semibold" onclick="switchToProjectTab('${proj.key}')" style="cursor: pointer;">Manage <i class="fa-solid fa-arrow-right ms-1"></i></span>
                             </div>
                         </div>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `).join('');
         }
 
         function switchToProjectTab(projectKey) {
@@ -1053,21 +1115,6 @@
             }
         }
 
-        // --- Chart lifecycle helpers -------------------------------------------------
-        // Chart.js measures the canvas's *rendered* size (via its parent's
-        // getBoundingClientRect) the instant `new Chart(...)` runs. If that happens
-        // before the browser has painted a layout pass for the canvas — e.g. right
-        // after the auth overlay is hidden, right after a Bootstrap tab-pane becomes
-        // visible, or on the very first page paint — the measured size can be 0x0,
-        // which produces a blank/invisible chart that never recovers on its own.
-        //
-        // `waitForVisibleCanvas` polls with requestAnimationFrame until the canvas
-        // actually has a non-zero layout box (or gives up after a timeout), and
-        // `initOrResizeCharts` is the single entry point everything below calls:
-        // it (re)builds the charts if they don't exist yet, or just calls
-        // `chart.resize()` + refreshes the data if they do — so switching tabs or
-        // resizing the window never leaves a stale/blank canvas behind.
-
         function waitForVisibleCanvas(canvas, callback, attemptsLeft = 60) {
             if (!canvas) return;
             const rect = canvas.getBoundingClientRect();
@@ -1076,7 +1123,6 @@
                 return;
             }
             if (attemptsLeft <= 0) {
-                // Give up waiting and try anyway; better than staying blank forever.
                 callback();
                 return;
             }
@@ -1154,7 +1200,6 @@
                 t = setTimeout(() => fn(...args), wait);
             };
         }
-        // -------------------------------------------------------------------------------
 
         function renderProjectView(projectKey) {
             const projectObj = PROJECTS.find(p => p.key === projectKey) || PROJECTS[0];
@@ -1284,7 +1329,7 @@
                         </div>
                         <button class="btn btn-sm ${t.isPinned ? 'btn-danger' : 'btn-outline-primary'} rounded-3 ms-2 flex-shrink-0" onclick="togglePin('${t.id}')">
                             ${t.isPinned ? 'Unpin' : 'Pin'}
-                        </button>
+                        button>
                     </div>
                 `).join('');
             selectPinModal.show();
@@ -1364,7 +1409,7 @@
         }
 
         function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ tasks, ctaList, ceoComment }, null, 2));
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ tasks, ctaList, ceoComment, projectTargetDates }, null, 2));
             const dl = document.createElement('a');
             dl.setAttribute("href", dataStr);
             dl.setAttribute("download", `CRM_Rollout_Backup.json`);
@@ -1382,16 +1427,17 @@
             const reader = new FileReader();
             reader.onload = function(evt) {
                 try {
-                    const imported = JSON.parse(evt.target.result);
-                    tasks = Array.isArray(imported) ? imported : (imported.tasks || []);
-                    if (imported.ctaList) ctaList = imported.ctaList;
-                    else if (imported.standaloneCtaText) ctaList = [imported.standaloneCtaText];
-                    if (imported.ceoComment) ceoComment = imported.ceoComment;
-                    saveCloudData();
-                    showToast('Import successful.');
-                    renderDashboard();
-                    initOrResizeCharts();
-                } catch (err) { showToast('Invalid JSON file.', 'danger'); }
+                      const imported = JSON.parse(evt.target.result);
+                      tasks = Array.isArray(imported) ? imported : (imported.tasks || []);
+                      if (imported.ctaList) ctaList = imported.ctaList;
+                      else if (imported.standaloneCtaText) ctaList = [imported.standaloneCtaText];
+                      if (imported.ceoComment) ceoComment = imported.ceoComment;
+                    if (imported.projectTargetDates) projectTargetDates = imported.projectTargetDates;
+                      saveCloudData();
+                      showToast('Import successful.');
+                      renderDashboard();
+                      initOrResizeCharts();
+                  } catch (err) { showToast('Invalid JSON file.', 'danger'); }
             };
             reader.readAsText(file);
         }
