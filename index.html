@@ -175,7 +175,6 @@
             background: linear-gradient(135deg, rgba(217, 119, 6, 0.06) 0%, rgba(245, 158, 11, 0.12) 100%);
         }
 
-        /* Password Overlay Screen */
         #authOverlay {
             position: fixed;
             top: 0;
@@ -375,7 +374,7 @@
                     <div class="glass-card p-4 mb-4">
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <h5 class="fw-bold mb-0 text-body"><i class="fa-solid fa-table-list me-2 text-primary"></i>Program Portfolio Summary</h5>
-                            <span class="small text-secondary">Overall Completion & Status by Project</span>
+                            <span class="small text-secondary">Completion & Expected Target Dates by Project</span>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-custom align-middle mb-0">
@@ -383,9 +382,8 @@
                                     <tr>
                                         <th>Workstream / Project</th>
                                         <th style="width: 140px;">Total Tasks</th>
-                                        <th style="width: 140px;">Completed</th>
+                                        <th style="width: 160px;">Expected Date</th>
                                         <th>Overall Progress</th>
-                                        <th style="width: 170px;">100% Target Date</th>
                                         <th style="width: 140px;" class="text-end">Status</th>
                                     </tr>
                                 </thead>
@@ -406,7 +404,10 @@
                                     <h3 class="fw-bold mb-0 text-body" id="currentProjectTitle">Project Title</h3>
                                     <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" id="currentProjectBadge">0 Tasks</span>
                                 </div>
-                                <span class="text-secondary small">Workstream task tracking & milestone management</span>
+                                <div class="d-flex align-items-center gap-2 mt-2">
+                                    <span class="text-secondary small"><i class="fa-regular fa-calendar me-1"></i> Target Completion: <strong id="currentProjectDateDisplay" class="text-body">Not Set</strong></span>
+                                    <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="openProjectSettingsModal()"><i class="fa-solid fa-pen"></i> Edit Date</button>
+                                </div>
                             </div>
                             <div class="d-flex align-items-center gap-3">
                                 <div class="text-end d-none d-sm-block me-2">
@@ -536,6 +537,28 @@
         </div>
     </div>
 
+    <!-- MODAL: PROJECT SETTINGS (EXPECTED DATE) -->
+    <div class="modal fade" id="projectSettingsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card border-secondary-subtle">
+                <div class="modal-header border-bottom border-secondary-subtle">
+                    <h5 class="modal-title fw-bold text-body"><i class="fa-regular fa-calendar-days text-primary me-2"></i>Edit Project Target Completion Date</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="projectExpectedDateInput" class="form-label fw-bold small">Expected Completion Date</label>
+                        <input type="date" class="form-control border-secondary-subtle" id="projectExpectedDateInput">
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary-subtle">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary px-4 fw-semibold" onclick="saveProjectExpectedDate()">Save Date</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: ADD / EDIT CTA DIRECTIVES -->
     <div class="modal fade" id="ctaModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -576,29 +599,6 @@
                 <div class="modal-footer border-top border-secondary-subtle">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-warning px-4 fw-semibold text-dark" onclick="saveCeoComment()">Save Comment</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: EDIT PROJECT TARGET DATE -->
-    <div class="modal fade" id="targetDateModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content glass-card border-primary-subtle">
-                <div class="modal-header border-bottom border-secondary-subtle">
-                    <h5 class="modal-title fw-bold text-body"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Set 100% Target Date</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="targetDateProjectKey">
-                    <div class="mb-3">
-                        <label for="projectTargetDateInput" class="form-label fw-bold small">Expected Date for 100% Completion (<span id="targetDateProjectTitleLabel">Project</span>)</label>
-                        <input type="date" class="form-control border-secondary-subtle" id="projectTargetDateInput">
-                    </div>
-                </div>
-                <div class="modal-footer border-top border-secondary-subtle">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary px-4 fw-semibold" onclick="saveProjectTargetDate()">Save Target Date</button>
                 </div>
             </div>
         </div>
@@ -658,22 +658,21 @@
         ];
 
         const PROJECTS = [
-            { key: 'BLOOM', title: 'BLOOM', icon: 'fa-seedling', color: '#10b981' },
-            { key: 'O-Lab', title: 'O-Lab', icon: 'fa-flask', color: '#06b6d4' },
-            { key: 'BLOOM partners', title: 'BLOOM partners', icon: 'fa-handshake', color: '#2563eb' },
-            { key: 'HR and finance', title: 'HR and finance', icon: 'fa-calculator', color: '#d97706' },
-            { key: 'Bloom 404', title: 'Bloom 404', icon: 'fa-bug', color: '#dc2626' },
-            { key: 'Beauty ways', title: 'Beauty ways', icon: 'fa-sparkles', color: '#9333ea' }
+            { key: 'BLOOM', title: 'BLOOM', icon: 'fa-seedling', color: '#10b981', expectedDate: '' },
+            { key: 'O-Lab', title: 'O-Lab', icon: 'fa-flask', color: '#06b6d4', expectedDate: '' },
+            { key: 'BLOOM partners', title: 'BLOOM partners', icon: 'fa-handshake', color: '#2563eb', expectedDate: '' },
+            { key: 'HR and finance', title: 'HR and finance', icon: 'fa-calculator', color: '#d97706', expectedDate: '' },
+            { key: 'Bloom 404', title: 'Bloom 404', icon: 'fa-bug', color: '#dc2626', expectedDate: '' },
+            { key: 'Beauty ways', title: 'Beauty ways', icon: 'fa-sparkles', color: '#9333ea', expectedDate: '' }
         ];
 
         let tasks = [];
         let ctaList = [...DEFAULT_CTA_LIST];
         let ceoComment = "No comment recorded yet.";
-        let projectTargetDates = {}; 
         let activeProject = 'dashboard';
         let pendingDeleteId = null;
 
-        let taskBootstrapModal, ctaBootstrapModal, ceoCommentBootstrapModal, targetDateModal, selectPinModal, deleteBootstrapModal, liveToast;
+        let taskBootstrapModal, ctaBootstrapModal, ceoCommentBootstrapModal, selectPinModal, deleteBootstrapModal, projectSettingsBootstrapModal, liveToast;
         let progressChartInstance = null;
         let statusChartInstance = null;
 
@@ -681,9 +680,9 @@
             taskBootstrapModal = new bootstrap.Modal(document.getElementById('taskModal'));
             ctaBootstrapModal = new bootstrap.Modal(document.getElementById('ctaModal'));
             ceoCommentBootstrapModal = new bootstrap.Modal(document.getElementById('ceoCommentModal'));
-            targetDateModal = new bootstrap.Modal(document.getElementById('targetDateModal'));
             selectPinModal = new bootstrap.Modal(document.getElementById('selectPinModal'));
             deleteBootstrapModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            projectSettingsBootstrapModal = new bootstrap.Modal(document.getElementById('projectSettingsModal'));
             liveToast = new bootstrap.Toast(document.getElementById('liveToast'));
 
             initTheme();
@@ -736,7 +735,13 @@
                         tasks = data.record.tasks || [];
                         ctaList = data.record.ctaList || (data.record.standaloneCtaText ? [data.record.standaloneCtaText] : [...DEFAULT_CTA_LIST]);
                         ceoComment = data.record.ceoComment || "No comment recorded yet.";
-                        projectTargetDates = data.record.projectTargetDates || {};
+                        if (data.record.projectDates) {
+                            PROJECTS.forEach(p => {
+                                if (data.record.projectDates[p.key]) {
+                                    p.expectedDate = data.record.projectDates[p.key];
+                                }
+                            });
+                        }
                     }
                 }
             } catch (err) {
@@ -756,11 +761,17 @@
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.record && (JSON.stringify(data.record.tasks) !== JSON.stringify(tasks) || JSON.stringify(data.record.ctaList) !== JSON.stringify(ctaList) || data.record.ceoComment !== ceoComment || JSON.stringify(data.record.projectTargetDates) !== JSON.stringify(projectTargetDates))) {
+                    if (data.record) {
                         tasks = data.record.tasks || [];
                         ctaList = data.record.ctaList || (data.record.standaloneCtaText ? [data.record.standaloneCtaText] : [...DEFAULT_CTA_LIST]);
                         ceoComment = data.record.ceoComment || "No comment recorded yet.";
-                        projectTargetDates = data.record.projectTargetDates || {};
+                        if (data.record.projectDates) {
+                            PROJECTS.forEach(p => {
+                                if (data.record.projectDates[p.key]) {
+                                    p.expectedDate = data.record.projectDates[p.key];
+                                }
+                            });
+                        }
                         if (activeProject === 'dashboard') {
                             renderDashboard();
                             updateCharts();
@@ -774,7 +785,11 @@
         }
 
         async function saveCloudData() {
-            const payload = { tasks, ctaList, ceoComment, projectTargetDates };
+            const projectDates = {};
+            PROJECTS.forEach(p => {
+                projectDates[p.key] = p.expectedDate || '';
+            });
+            const payload = { tasks, ctaList, ceoComment, projectDates };
             try {
                 await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
                     method: 'PUT',
@@ -786,31 +801,6 @@
                 });
             } catch (err) {
                 console.error("Failed to sync to cloud", err);
-            }
-        }
-
-        function openTargetDateModal(projectKey) {
-            const projectObj = PROJECTS.find(p => p.key === projectKey);
-            if (!projectObj) return;
-            document.getElementById('targetDateProjectKey').value = projectKey;
-            document.getElementById('targetDateProjectTitleLabel').textContent = projectObj.title;
-            document.getElementById('projectTargetDateInput').value = projectTargetDates[projectKey] || '';
-            targetDateModal.show();
-        }
-
-        function saveProjectTargetDate() {
-            const projectKey = document.getElementById('targetDateProjectKey').value;
-            const dateVal = document.getElementById('projectTargetDateInput').value;
-            if (projectKey) {
-                if (dateVal) {
-                    projectTargetDates[projectKey] = dateVal;
-                } else {
-                    delete projectTargetDates[projectKey];
-                }
-                saveCloudData();
-                targetDateModal.hide();
-                showToast('Target completion date updated!');
-                renderDashboard();
             }
         }
 
@@ -838,8 +828,6 @@
         function updateKPIs() {
             document.getElementById('ceoCommentDisplay').textContent = ceoComment;
             document.getElementById('kpiOverallProgress').textContent = `${calculateOverallProgress()}%`;
-            const kpiActiveTasksEl = document.getElementById('kpiActiveTasks');
-            if (kpiActiveTasksEl) kpiActiveTasksEl.textContent = tasks.filter(t => t.status !== 'Completed').length;
             document.getElementById('totalTasksBadge').textContent = `${tasks.length} Tasks Total`;
         }
 
@@ -915,8 +903,8 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    `;
-                                }).join('')}
+                                `;
+                            }).join('')}
                             </div>
                         </div>
                     </div>
@@ -938,8 +926,8 @@
                                         <button class="btn btn-sm btn-link text-warning p-0" onclick="openEditCtaModal(${index})" title="Edit"><i class="fa-solid fa-pen"></i></button>
                                         <button class="btn btn-sm btn-link text-danger p-0" onclick="deleteCtaDirective(${index})" title="Delete"><i class="fa-solid fa-trash"></i></button>
                                     </div>
-                                </div>
-                            `).join('')}
+                            </div>
+                        `).join('')}
                         </div>
                     </div>
                     <div class="pt-2 border-top border-warning-subtle d-flex align-items-center justify-content-between">
@@ -1011,21 +999,39 @@
             updateKPIs();
         }
 
+        function openProjectSettingsModal() {
+            const proj = PROJECTS.find(p => p.key === activeProject);
+            document.getElementById('projectExpectedDateInput').value = proj ? (proj.expectedDate || '') : '';
+            projectSettingsBootstrapModal.show();
+        }
+
+        function saveProjectExpectedDate() {
+            const newDate = document.getElementById('projectExpectedDateInput').value;
+            const proj = PROJECTS.find(p => p.key === activeProject);
+            if (proj) {
+                proj.expectedDate = newDate;
+                saveCloudData();
+                projectSettingsBootstrapModal.hide();
+                showToast('Project expected date updated.');
+                renderProjectView(activeProject);
+            }
+        }
+
         function renderPortfolioTable() {
             const tbody = document.getElementById('portfolioTableBody');
             tbody.innerHTML = PROJECTS.map(proj => {
                 const projTasks = tasks.filter(t => t.project === proj.key);
                 const count = projTasks.length;
-                const completedCount = projTasks.filter(t => t.status === 'Completed').length;
                 const pct = getProjectProgress(proj.key);
-                const targetDate = projectTargetDates[proj.key] || '';
                 let statusBadge = '<span class="badge badge-status-notstarted">Not Started</span>';
                 if (pct === 100 && count > 0) statusBadge = '<span class="badge badge-status-completed">Completed</span>';
                 else if (pct > 0) statusBadge = '<span class="badge badge-status-inprogress">In Progress</span>';
 
+                const dateDisplay = proj.expectedDate ? `<span class="small fw-semibold text-body"><i class="fa-regular fa-calendar text-muted me-1"></i>${proj.expectedDate}</span>` : '<span class="small text-muted fst-italic">Not set</span>';
+
                 return `
-                    <tr>
-                        <td onclick="switchToProjectTab('${proj.key}')" style="cursor: pointer;">
+                    <tr style="cursor: pointer;" onclick="switchToProjectTab('${proj.key}')">
+                        <td>
                             <div class="d-flex align-items-center gap-2">
                                 <div class="rounded-2 p-1.5 d-flex align-items-center justify-content-center" style="background: ${proj.color}20; color: ${proj.color}; width: 32px; height: 32px;">
                                     <i class="fa-solid ${proj.icon} small"></i>
@@ -1033,9 +1039,9 @@
                                 <span class="fw-bold text-body">${proj.title}</span>
                             </div>
                         </td>
-                        <td class="fw-semibold text-body" onclick="switchToProjectTab('${proj.key}')" style="cursor: pointer;">${count} Tasks</td>
-                        <td class="text-secondary" onclick="switchToProjectTab('${proj.key}')" style="cursor: pointer;">${completedCount} Tasks</td>
-                        <td onclick="switchToProjectTab('${proj.key}')" style="cursor: pointer;">
+                        <td class="fw-semibold text-body">${count} Tasks</td>
+                        <td>${dateDisplay}</td>
+                        <td>
                             <div class="d-flex align-items-center gap-2" style="max-width: 220px;">
                                 <div class="progress progress-slim flex-grow-1">
                                     <div class="progress-bar" style="width: ${pct}%; background-color: ${proj.color};"></div>
@@ -1043,13 +1049,7 @@
                                 <span class="small fw-bold" style="width: 36px;">${pct}%</span>
                             </div>
                         </td>
-                        <td>
-                            <div class="d-flex align-items-center justify-content-between gap-1">
-                                <span class="small ${targetDate ? 'text-body fw-semibold' : 'text-muted'}">${targetDate || 'Not set'}</span>
-                                <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="openTargetDateModal('${proj.key}')" title="Set 100% Target Date"><i class="fa-solid fa-calendar-days"></i></button>
-                            </div>
-                        </td>
-                        <td class="text-end" onclick="switchToProjectTab('${proj.key}')" style="cursor: pointer;">${statusBadge}</td>
+                        <td class="text-end">${statusBadge}</td>
                     </tr>
                 `;
             }).join('');
@@ -1062,12 +1062,12 @@
                 const count = projTasks.length;
                 const completedCount = projTasks.filter(t => t.status === 'Completed').length;
                 const pct = getProjectProgress(proj.key);
-                const targetDate = projectTargetDates[proj.key] || '';
+                const dateStr = proj.expectedDate ? `<i class="fa-regular fa-calendar me-1"></i>Target: ${proj.expectedDate}` : '<i class="fa-regular fa-calendar me-1"></i>Target: Not Set';
 
                 return `
                     <div class="col-12 col-md-6 col-lg-4">
-                        <div class="glass-card p-4 project-card h-100 d-flex flex-column justify-content-between">
-                            <div onclick="switchToProjectTab('${proj.key}')">
+                        <div class="glass-card p-4 project-card h-100 d-flex flex-column justify-content-between" onclick="switchToProjectTab('${proj.key}')">
+                            <div>
                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="rounded-3 p-2 d-flex align-items-center justify-content-center" style="background: ${proj.color}20; color: ${proj.color}; width: 38px; height: 38px;">
@@ -1077,6 +1077,7 @@
                                     </div>
                                     <span class="badge bg-body-tertiary text-secondary border">${count} Tasks</span>
                                 </div>
+                                <div class="small text-secondary mb-3">${dateStr}</div>
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <span class="small text-secondary">Completion Progress</span>
@@ -1086,21 +1087,15 @@
                                         <div class="progress-bar" style="width: ${pct}%; background-color: ${proj.color};"></div>
                                     </div>
                                 </div>
-                                <div class="d-flex align-items-center justify-content-between small text-secondary mb-2">
-                                    <span>100% Target Date:</span>
-                                    <span class="fw-semibold text-body">${targetDate || 'Not set'}</span>
-                                </div>
                             </div>
-                          <div class="d-flex align-items-center justify-content-between pt-2 border-top border-secondary-subtle">
-                              <span class="micro-text text-secondary" onclick="switchToProjectTab('${proj.key}')" style="cursor: pointer;">${completedCount} of ${count} Completed</span>
-                            <div class="d-flex align-items-center gap-2">
-                                <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="openTargetDateModal('${proj.key}')" title="Set 100% Target Date"><i class="fa-solid fa-calendar-days"></i></button>
-                                <span class="small text-primary fw-semibold" onclick="switchToProjectTab('${proj.key}')" style="cursor: pointer;">Manage <i class="fa-solid fa-arrow-right ms-1"></i></span>
+                            <div class="d-flex align-items-center justify-content-between pt-2 border-top border-secondary-subtle">
+                                <span class="micro-text text-secondary">${completedCount} of ${count} Completed</span>
+                                <span class="small text-primary fw-semibold">Manage <i class="fa-solid fa-arrow-right ms-1"></i></span>
                             </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function switchToProjectTab(projectKey) {
@@ -1205,6 +1200,7 @@
             const projectObj = PROJECTS.find(p => p.key === projectKey) || PROJECTS[0];
             document.getElementById('currentProjectTitle').textContent = projectObj.title;
             document.getElementById('emptyStateProjectName').textContent = projectObj.title;
+            document.getElementById('currentProjectDateDisplay').textContent = projectObj.expectedDate || 'Not Set';
             const projectTasks = tasks.filter(t => t.project === projectKey);
             document.getElementById('currentProjectBadge').textContent = `${projectTasks.length} Tasks`;
             document.getElementById('currentProjectProgressPct').textContent = `${getProjectProgress(projectKey)}%`;
@@ -1221,11 +1217,11 @@
                 if (statusFilter !== 'ALL' && t.status !== statusFilter) return false;
                 if (searchQuery) {
                     return (t.description || '').toLowerCase().includes(searchQuery) ||
-                         (t.nextAction || '').toLowerCase().includes(searchQuery) ||
-                         (t.id || '').toLowerCase().includes(searchQuery);
+                           (t.nextAction || '').toLowerCase().includes(searchQuery) ||
+                           (t.id || '').toLowerCase().includes(searchQuery);
                 }
                 return true;
-          });
+            });
 
             const tbody = document.getElementById('taskTableBody');
             const emptyState = document.getElementById('tableEmptyState');
@@ -1265,8 +1261,8 @@
                         </div>
                     </td>
                 </tr>
-          `;
-      }
+            `;
+        }
 
         function openTaskModal(taskId = null) {
             const form = document.getElementById('taskForm');
@@ -1292,7 +1288,7 @@
                 document.getElementById('taskProgressVal').textContent = '0';
             }
             taskBootstrapModal.show();
-      }
+        }
 
         function openTaskModalForCurrentProject() { openTaskModal(null); }
 
@@ -1409,7 +1405,9 @@
         }
 
         function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ tasks, ctaList, ceoComment, projectTargetDates }, null, 2));
+            const projectDates = {};
+            PROJECTS.forEach(p => projectDates[p.key] = p.expectedDate || '');
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ tasks, ctaList, ceoComment, projectDates }, null, 2));
             const dl = document.createElement('a');
             dl.setAttribute("href", dataStr);
             dl.setAttribute("download", `CRM_Rollout_Backup.json`);
@@ -1427,24 +1425,27 @@
             const reader = new FileReader();
             reader.onload = function(evt) {
                 try {
-                      const imported = JSON.parse(evt.target.result);
-                      tasks = Array.isArray(imported) ? imported : (imported.tasks || []);
-                      if (imported.ctaList) ctaList = imported.ctaList;
-                      else if (imported.standaloneCtaText) ctaList = [imported.standaloneCtaText];
-                      if (imported.ceoComment) ceoComment = imported.ceoComment;
-                    if (imported.projectTargetDates) projectTargetDates = imported.projectTargetDates;
-                      saveCloudData();
-                      showToast('Import successful.');
-                      renderDashboard();
-                      initOrResizeCharts();
-                  } catch (err) { showToast('Invalid JSON file.', 'danger'); }
-          };
+                    const imported = JSON.parse(evt.target.result);
+                    tasks = Array.isArray(imported) ? imported : (imported.tasks || []);
+                    if (imported.ctaList) ctaList = imported.ctaList;
+                    if (imported.ceoComment) ceoComment = imported.ceoComment;
+                    if (imported.projectDates) {
+                        PROJECTS.forEach(p => {
+                            if (imported.projectDates[p.key]) p.expectedDate = imported.projectDates[p.key];
+                        });
+                    }
+                    saveCloudData();
+                    showToast('Import successful.');
+                    renderDashboard();
+                    initOrResizeCharts();
+                } catch (err) { showToast('Invalid JSON file.', 'danger'); }
+            };
             reader.readAsText(file);
         }
 
         function showToast(msg) {
             document.getElementById('toastMessage').innerHTML = `<i class="fa-solid fa-circle-check text-success me-2"></i> ${escapeHtml(msg)}`;
-          liveToast.show();
+            liveToast.show();
         }
 
         function initTheme() {
