@@ -220,7 +220,7 @@
         </div>
     </div>
 
-    <!-- MAIN APP WRAPPER (Hidden until authenticated) -->
+    <!-- MAIN APP WRAPPER -->
     <div id="appContainer" style="display: none; flex-direction: column; min-height: 100vh;">
         <header class="navbar navbar-expand-lg border-bottom border-secondary-subtle px-3 px-lg-4 py-3 glass-card rounded-0 mb-4">
             <div class="container-fluid p-0">
@@ -669,7 +669,7 @@
         let tasks = [];
         let ctaList = [...DEFAULT_CTA_LIST];
         let ceoComment = "No comment recorded yet.";
-        let projectTargetDates = {}; // stores target date strings mapped by project key
+        let projectTargetDates = {}; 
         let activeProject = 'dashboard';
         let pendingDeleteId = null;
 
@@ -1221,11 +1221,11 @@
                 if (statusFilter !== 'ALL' && t.status !== statusFilter) return false;
                 if (searchQuery) {
                     return (t.description || '').toLowerCase().includes(searchQuery) ||
-                           (t.nextAction || '').toLowerCase().includes(searchQuery) ||
-                           (t.id || '').toLowerCase().includes(searchQuery);
+                         (t.nextAction || '').toLowerCase().includes(searchQuery) ||
+                         (t.id || '').toLowerCase().includes(searchQuery);
                 }
                 return true;
-            });
+          });
 
             const tbody = document.getElementById('taskTableBody');
             const emptyState = document.getElementById('tableEmptyState');
@@ -1265,8 +1265,8 @@
                         </div>
                     </td>
                 </tr>
-            `;
-        }
+          `;
+      }
 
         function openTaskModal(taskId = null) {
             const form = document.getElementById('taskForm');
@@ -1292,7 +1292,7 @@
                 document.getElementById('taskProgressVal').textContent = '0';
             }
             taskBootstrapModal.show();
-        }
+      }
 
         function openTaskModalForCurrentProject() { openTaskModal(null); }
 
@@ -1329,7 +1329,7 @@
                         </div>
                         <button class="btn btn-sm ${t.isPinned ? 'btn-danger' : 'btn-outline-primary'} rounded-3 ms-2 flex-shrink-0" onclick="togglePin('${t.id}')">
                             ${t.isPinned ? 'Unpin' : 'Pin'}
-                        button>
+                        </button>
                     </div>
                 `).join('');
             selectPinModal.show();
@@ -1438,13 +1438,13 @@
                       renderDashboard();
                       initOrResizeCharts();
                   } catch (err) { showToast('Invalid JSON file.', 'danger'); }
-            };
+          };
             reader.readAsText(file);
         }
 
         function showToast(msg) {
             document.getElementById('toastMessage').innerHTML = `<i class="fa-solid fa-circle-check text-success me-2"></i> ${escapeHtml(msg)}`;
-            liveToast.show();
+          liveToast.show();
         }
 
         function initTheme() {
