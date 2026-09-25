@@ -194,6 +194,19 @@
             width: 100%;
             height: 240px;
         }
+
+        .cta-meta-badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+        }
+
+        .cta-overdue {
+            color: #b91c1c !important;
+            background-color: rgba(220, 38, 38, 0.12) !important;
+            border: 1px solid rgba(220, 38, 38, 0.25);
+        }
     </style>
 </head>
 <body>
@@ -573,6 +586,16 @@
                         <label for="ctaTextInput" class="form-label fw-bold small">Call to Action Directive Text</label>
                         <textarea class="form-control border-secondary-subtle p-3" id="ctaTextInput" rows="4" placeholder="Enter CTA directive..." required></textarea>
                     </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label for="ctaOwnerInput" class="form-label fw-bold small">Owner</label>
+                            <input type="text" class="form-control border-secondary-subtle" id="ctaOwnerInput" placeholder="e.g. Amir Tantawi">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="ctaDeadlineInput" class="form-label fw-bold small">Deadline</label>
+                            <input type="date" class="form-control border-secondary-subtle" id="ctaDeadlineInput">
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer border-top border-secondary-subtle">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -654,7 +677,7 @@
         const API_KEY = '$2a$10$AEh.xH3TcEreYwAoCzjK.ehm62aoYfWf0GbbcIhNtf9vjdUhk95j2';
 
         const DEFAULT_CTA_LIST = [
-            "Ensure all cross-functional leads finalize security compliance sign-offs and execute end-to-end integration testing before the Q4 cutoff date."
+            { text: "Ensure all cross-functional leads finalize security compliance sign-offs and execute end-to-end integration testing before the Q4 cutoff date.", owner: '', deadline: '' }
         ];
 
         const PROJECTS = [
@@ -724,6 +747,14 @@
             }, 300);
         }
 
+        function normalizeCtaList(list) {
+            if (!Array.isArray(list)) return [...DEFAULT_CTA_LIST];
+            return list.map(item => {
+                if (typeof item === 'string') return { text: item, owner: '', deadline: '' };
+                return { text: item.text || '', owner: item.owner || '', deadline: item.deadline || '' };
+            });
+        }
+
         async function fetchCloudDataAndInit() {
             try {
                 const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
@@ -733,7 +764,7 @@
                     const data = await response.json();
                     if (data.record) {
                         tasks = data.record.tasks || [];
-                        ctaList = data.record.ctaList || (data.record.standaloneCtaText ? [data.record.standaloneCtaText] : [...DEFAULT_CTA_LIST]);
+                        ctaList = normalizeCtaList(data.record.ctaList || (data.record.standaloneCtaText ? [data.record.standaloneCtaText] : [...DEFAULT_CTA_LIST]));
                         ceoComment = data.record.ceoComment || "No comment recorded yet.";
                         if (data.record.projectDates) {
                             PROJECTS.forEach(p => {
@@ -763,7 +794,7 @@
                     const data = await response.json();
                     if (data.record) {
                         tasks = data.record.tasks || [];
-                        ctaList = data.record.ctaList || (data.record.standaloneCtaText ? [data.record.standaloneCtaText] : [...DEFAULT_CTA_LIST]);
+                        ctaList = normalizeCtaList(data.record.ctaList || (data.record.standaloneCtaText ? [data.record.standaloneCtaText] : [...DEFAULT_CTA_LIST]));
                         ceoComment = data.record.ceoComment || "No comment recorded yet.";
                         if (data.record.projectDates) {
                             PROJECTS.forEach(p => {
@@ -852,6 +883,20 @@
             return tasks.filter(t => t.isPinned);
         }
 
+        function isCtaOverdue(deadline) {
+            if (!deadline) return false;
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const d = new Date(deadline + 'T00:00:00');
+            return d < today;
+        }
+
+        function formatCtaDate(deadline) {
+            if (!deadline) return '';
+            const d = new Date(deadline + 'T00:00:00');
+            return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
         function renderSplitHeroSection() {
             const leftCard = document.getElementById('heroLeftTaskCard');
             const rightCard = document.getElementById('heroRightCtaCard');
@@ -918,16 +963,25 @@
                             <span class="text-uppercase micro-text fw-bold text-warning"><i class="fa-solid fa-bullhorn me-1"></i> Program Call To Action Directives</span>
                             <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">${ctaList.length} Active</span>
                         </div>
-                        <div class="d-flex flex-column gap-2 my-2 overflow-auto" style="max-height: 140px;">
-                            ${ctaList.map((cta, index) => `
-                                <div class="p-2 rounded-3 bg-white bg-opacity-75 border border-warning-subtle shadow-sm d-flex justify-content-between align-items-center">
-                                    <p class="small fw-bold text-body mb-0 pe-2" style="color: #0f172a; white-space: pre-line;">"${escapeHtml(cta)}"</p>
-                                    <div class="d-flex gap-1 flex-shrink-0">
-                                        <button class="btn btn-sm btn-link text-warning p-0" onclick="openEditCtaModal(${index})" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                                        <button class="btn btn-sm btn-link text-danger p-0" onclick="deleteCtaDirective(${index})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                        <div class="d-flex flex-column gap-2 my-2 overflow-auto" style="max-height: 180px;">
+                            ${ctaList.map((cta, index) => {
+                                const overdue = isCtaOverdue(cta.deadline);
+                                return `
+                                <div class="p-2 rounded-3 bg-white bg-opacity-75 border border-warning-subtle shadow-sm">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <p class="small fw-bold text-body mb-1 pe-2" style="color: #0f172a; white-space: pre-line;">"${escapeHtml(cta.text)}"</p>
+                                        <div class="d-flex gap-1 flex-shrink-0">
+                                            <button class="btn btn-sm btn-link text-warning p-0" onclick="openEditCtaModal(${index})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                            <button class="btn btn-sm btn-link text-danger p-0" onclick="deleteCtaDirective(${index})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                                        </div>
                                     </div>
-                            </div>
-                        `).join('')}
+                                    <div class="d-flex flex-wrap gap-2 mt-1">
+                                        ${cta.owner ? `<span class="cta-meta-badge bg-primary-subtle text-primary-emphasis border border-primary-subtle"><i class="fa-solid fa-user me-1"></i>${escapeHtml(cta.owner)}</span>` : `<span class="cta-meta-badge bg-body-tertiary text-secondary border">No owner set</span>`}
+                                        ${cta.deadline ? `<span class="cta-meta-badge ${overdue ? 'cta-overdue' : 'bg-body-tertiary text-secondary border'}"><i class="fa-regular fa-calendar me-1"></i>${formatCtaDate(cta.deadline)}${overdue ? ' (Overdue)' : ''}</span>` : `<span class="cta-meta-badge bg-body-tertiary text-secondary border">No deadline set</span>`}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
                         </div>
                     </div>
                     <div class="pt-2 border-top border-warning-subtle d-flex align-items-center justify-content-between">
@@ -942,27 +996,34 @@
             document.getElementById('ctaModalTitle').textContent = 'Add Program Call To Action';
             document.getElementById('ctaIndexInput').value = '';
             document.getElementById('ctaTextInput').value = '';
+            document.getElementById('ctaOwnerInput').value = '';
+            document.getElementById('ctaDeadlineInput').value = '';
             ctaBootstrapModal.show();
         }
 
         function openEditCtaModal(index) {
             document.getElementById('ctaModalTitle').textContent = 'Edit Program Call To Action';
             document.getElementById('ctaIndexInput').value = index;
-            document.getElementById('ctaTextInput').value = ctaList[index];
+            document.getElementById('ctaTextInput').value = ctaList[index].text;
+            document.getElementById('ctaOwnerInput').value = ctaList[index].owner || '';
+            document.getElementById('ctaDeadlineInput').value = ctaList[index].deadline || '';
             ctaBootstrapModal.show();
         }
 
         function saveCtaDirective() {
             const indexVal = document.getElementById('ctaIndexInput').value;
             const inputVal = document.getElementById('ctaTextInput').value.trim();
+            const ownerVal = document.getElementById('ctaOwnerInput').value.trim();
+            const deadlineVal = document.getElementById('ctaDeadlineInput').value;
             if (!inputVal) {
                 showToast('Directive cannot be empty.', 'danger');
                 return;
             }
+            const ctaObj = { text: inputVal, owner: ownerVal, deadline: deadlineVal };
             if (indexVal === '') {
-                ctaList.push(inputVal);
+                ctaList.push(ctaObj);
             } else {
-                ctaList[parseInt(indexVal)] = inputVal;
+                ctaList[parseInt(indexVal)] = ctaObj;
             }
             saveCloudData();
             ctaBootstrapModal.hide();
@@ -1427,7 +1488,7 @@
                 try {
                     const imported = JSON.parse(evt.target.result);
                     tasks = Array.isArray(imported) ? imported : (imported.tasks || []);
-                    if (imported.ctaList) ctaList = imported.ctaList;
+                    if (imported.ctaList) ctaList = normalizeCtaList(imported.ctaList);
                     if (imported.ceoComment) ceoComment = imported.ceoComment;
                     if (imported.projectDates) {
                         PROJECTS.forEach(p => {
